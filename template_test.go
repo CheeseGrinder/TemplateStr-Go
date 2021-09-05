@@ -5,12 +5,18 @@ import (
 	"reflect"
 	"testing"
 	ti "time"
+
+    tem "github.com/CheeseGrinder/TemplateStr-Go/templateStr"
 )
 
 var Reset  = "\033[0m"
 var Red    = "\033[31m"
 var Green  = "\033[32m"
 var Yellow = "\033[33m"
+
+type Any = interface{}
+type VarMap = tem.VariableMap
+type FuncArray = tem.FuncArray
 
 func test([]Any) string {
     return "Test1"
@@ -39,7 +45,7 @@ func testType(list []Any) string {
 }
 
 var arrayFunc = FuncArray{test, testType}
-var varMap = VariableMap{
+var varMap = VarMap{
     "name": "Jame", 
     "age": 32, 
     "bool": true, 
@@ -48,11 +54,11 @@ var varMap = VariableMap{
     "swap": "AzErTy",
     "cfold": "grüßen",
     "Build": "Succes",
-    "dict": VariableMap{
+    "dict": VarMap{
         "value": "dict in dict",
     },
-    "dictMaster": VariableMap{
-        "dict1": VariableMap{
+    "dictMaster": VarMap{
+        "dict1": VarMap{
             "value": "dict in dict in dict",
         },
     },
@@ -70,7 +76,7 @@ func TestAll(t *testing.T) {
             "Color: #00FF00",
         }
 
-    parser := New(arrayFunc, varMap)
+    parser := tem.New(arrayFunc, varMap)
 
     if text := parser.Parse(testAll_1[0]); text != testAll_1[1] {
         t.Fatalf("testAll_1 : '" + Red + text + Reset + "' != '" + Yellow + testAll_1[1] + Reset + "'")
@@ -82,14 +88,14 @@ func TestAll(t *testing.T) {
 }
 
 func TestVariable(t *testing.T) {
-    
+
     text_1 := []string{"var bool = {{$bool}} and name = {{$name}}", "var bool = true and name = Jame"}
     text_2 := []string{"{{$dict.value}}", "dict in dict"}
     text_3 := []string{"{{$dictMaster.dict1.value}}", "dict in dict in dict"}
     text_4 := []string{"{{$word}}", "None"}
     text_5 := []string{"{{$dict.dict1.value}}", "None"}
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     if text := parser.ParseVariable(text_1[0]); text != text_1[1] {t.Fatalf("text_1 : '" + Red + text + Reset + "' != '" + Yellow + text_1[1] + Reset + "'")}
     if text := parser.ParseVariable(text_2[0]); text != text_2[1] {t.Fatalf("text_2 : '" + Red + text + Reset + "' != '" + Yellow + text_2[1] + Reset + "'")}
@@ -110,7 +116,7 @@ func TestFunction(t *testing.T) {
     date := "{{@date}}"
     dateTime := "{{@dateTime}}"
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     if text := parser.ParseFunction(uppercase[0]); text != uppercase[1] {t.Fatalf("uppercase : '" + Red + text + Reset + "' != '" + Yellow + uppercase[1] + Reset + "'")}
     if text := parser.ParseFunction(uppercase2[0]); text != uppercase2[1] {t.Fatalf("uppercase2 : '" + Red + text + Reset + "' != '" + Yellow + uppercase2[1] + Reset + "'")}
@@ -137,7 +143,7 @@ func TestCustomFunction(t *testing.T) {
     test := []string{"{{@test}}", "Test1"}
     testType := []string{"{{@testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> age}}", "text text text true 123 123.4 32"}
 
-    parser := New(arrayFunc, varMap)
+    parser := tem.New(arrayFunc, varMap)
 
     if text := parser.ParseFunction(test[0]); text != test[1] {
         t.Fatalf( "'" + Red + text + Reset + "' != '" + Yellow + test[1] + Reset + "'")
@@ -155,7 +161,7 @@ func TestConditionEqual(t *testing.T) {
     float_Equal_Str := []string{"{{#<n:4.5> == 'texte': yes || no}}", "no"}
     bool_Equal_Str := []string{"{{#<b:True> == 'texte': yes || no}}", "no"}
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     if text := parser.ParseCondition(str_Equal_Str[0]); text != str_Equal_Str[1] {t.Fatalf("str_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Equal_Str[1] + Reset + "'")}
     if text := parser.ParseCondition(str_Equal2_Str[0]); text != str_Equal2_Str[1] {t.Fatalf("str_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Equal2_Str[1] + Reset + "'")}
@@ -172,7 +178,7 @@ func TestConditionNotEqual(t *testing.T) {
     float_Not_Equal_Str := []string{"{{#<n:4.5> != 'texte': yes || no}}", "yes"}
     bool_Not_Equal_Str := []string{"{{#<b:True> != 'texte': yes || no}}", "yes"}
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     if text := parser.ParseCondition(str_Not_Equal_Str[0]); text != str_Not_Equal_Str[1] {t.Fatalf("str_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Not_Equal_Str[1] + Reset + "'")}
     if text := parser.ParseCondition(str_Not_Equal2_Str[0]); text != str_Not_Equal2_Str[1] {t.Fatalf("str_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Not_Equal2_Str[1] + Reset + "'")}
@@ -183,7 +189,7 @@ func TestConditionNotEqual(t *testing.T) {
 
 func TestConditionSuperiorEqual(t *testing.T) {
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     // String
     str_Superior_Equal_Str := []string{"{{#'text' >= 'text': yes || no}}", "yes"}
@@ -328,7 +334,7 @@ func TestConditionSuperiorEqual(t *testing.T) {
 
 func TestConditionSuperior(t *testing.T) {
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     // String
     str_Superior_Str := []string{"{{#'text' > 'text': yes || no}}", "no"}
@@ -473,7 +479,7 @@ func TestConditionSuperior(t *testing.T) {
 
 func TestConditionInferiorEqual(t *testing.T) {
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     // String
     str_Inferior_Equal_Str := []string{"{{#'text' <= 'text': yes || no}}", "yes"}
@@ -618,7 +624,7 @@ func TestConditionInferiorEqual(t *testing.T) {
 
 func TestConditionInferior(t *testing.T) {
 
-    parser := New(FuncArray{}, varMap)
+    parser := tem.New(FuncArray{}, varMap)
 
     // String
     str_Inferior_Str := []string{"{{#'text' < 'text': yes || no}}", "no"}
@@ -766,7 +772,7 @@ func TestSwitch(t *testing.T) {
     text_Switch_1 := []string{"{{?name; Jame=#0, Tony:=#1, Marco:=#2, default=#default}}", "#0"}
     text_Switch_2 := []string{"{{?age:int; 56=#0, 36=#1, 32=#2, default=#default}}", "#2"}
 
-    parser := New(arrayFunc, varMap)
+    parser := tem.New(arrayFunc, varMap)
 
     if text := parser.ParseSwitch(text_Switch_1[0]); text != text_Switch_1[1] {
         t.Fatalf("text_Switch_1 : '" + Red + text + Reset + "' != '" + Yellow + text_Switch_1[1] + Reset + "'")
@@ -783,7 +789,7 @@ func TestHasVariable(t *testing.T) {
     text_Has_Variable_2 := []Any{"{{$bool}} and {{@uppercase lower}}", true}
     text_Has_Variable_3 := []Any{"{{@uppercaseFirst bool}} and {{@uppercase lower}}", false}
 
-    parser := New(FuncArray{}, VariableMap{})
+    parser := tem.New(FuncArray{}, VarMap{})
 
     if text := parser.HasVariable(fmt.Sprintf("%v",text_Has_Variable_1[0])); text != text_Has_Variable_1[1] {
         t.Fatalf("text_Has_Variable_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_1[1]) + Reset + "'")
@@ -804,7 +810,7 @@ func TestHasFunction(t *testing.T) {
     text_Has_Function_2 := []Any{"{{@uppercase lower}} and {{#'text' > 'text': yes || no}}", true}
     text_Has_Function_3 := []Any{"{{#'text' > 'text': yes || no}} and {{#'text' < 'text': yes || no}}", false}
     
-    parser := New(FuncArray{}, VariableMap{})
+    parser := tem.New(FuncArray{}, VarMap{})
     
     if text := parser.HasFunction(fmt.Sprintf("%v",text_Has_Function_1[0])); text != text_Has_Function_1[1] {
         t.Fatalf("text_Has_Function_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_1[1]) + Reset + "'")
@@ -825,7 +831,7 @@ func TestHasCondition(t *testing.T) {
     text_Has_Condition_2 := []Any{"{{#'text' > 'text': yes || no}} and {{?age:int; 56=#0, 36=#1, 32=#2, default=#default}}", true}
     text_Has_Condition_3 := []Any{"{{?age:int; 56=#0, 36=#1, 32=#2, default=#default}} and {{?age:int; 56=#0, 36=#1, 32=#2, default=#default}}", false}
     
-    parser := New(FuncArray{}, VariableMap{})
+    parser := tem.New(FuncArray{}, VarMap{})
     
     if text := parser.HasCondition(fmt.Sprintf("%v",text_Has_Condition_1[0])); text != text_Has_Condition_1[1] {
         t.Fatalf("text_Has_Condition_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_1[1]) + Reset + "'")
@@ -846,7 +852,7 @@ func TestHasSwitch(t *testing.T) {
     text_Has_Switch_2 := []Any{"{{?age:int; 56=#0, 36=#1, 32=#2, default=#default}} and {{$bool}}", true}
     text_Has_Switch_3 := []Any{"{{$bool}} and {{$name}}", false}
 
-    parser := New(FuncArray{}, VariableMap{})
+    parser := tem.New(FuncArray{}, VarMap{})
 
     if text := parser.HasSwitch(fmt.Sprintf("%v",text_Has_Switch_1[0])); text != text_Has_Switch_1[1] {
         t.Fatalf("text_Has_Switch_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_1[1]) + Reset + "'")
