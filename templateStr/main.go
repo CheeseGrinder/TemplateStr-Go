@@ -32,9 +32,9 @@ type TemplateStr struct {
     funcArray FuncArray
 }
 
-// `functionList: list` is a list of custom functions that can be used when you call a function with: `{{@myCustomFunction}}`
+// `funcArray FuncArray` is a array of custom functions that can be used when you call a function with: `{{@myCustomFunction}}`
 //
-// `variableDict: dict` is a dictionary of the values you want to use when you call: `{{$myVar}}`
+// `variableMap VariableMap` is a map of the values you want to use when you call: `{{$myVar}}`
 //
 // Typing:
 //     keyVariable  : is the key of the value in the dictionary pass to the constructor (return the value)
@@ -51,6 +51,7 @@ func New(funcArray FuncArray, variableMap VariableMap) TemplateStr {
 }
 
 // Function utility
+
 func getNameFunc(function Func) string {
     spli := strings.Split(runtime.FuncForPC(reflect.ValueOf(function).Pointer()).Name(), ".")
     return spli[len(spli)-1]
