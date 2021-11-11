@@ -1,6 +1,6 @@
 # TemplateStr-Go
 
-### TemplateStr allows to add variable, function and condition in a string, useful in config files.
+### TemplateStr allows to add variable, function and condition in a string.
 
 <div align="center">
     <img src="https://img.shields.io/static/v1?label=Go&message=1.17&color=5c5c5c&labelColor=000000&style=flat-square&logo=Go&logoColor=00ADD8"/>

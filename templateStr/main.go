@@ -68,14 +68,14 @@ func getVariable(key string, varMap VariableMap, ) (Any, bool) {
         keyArray := strings.Split(key, ".")
         lenKeyArray := len(keyArray)
 
-        for index, kayMap := range keyArray {
+        for index, keyMap := range keyArray {
             
             if index == 0 {
-                tempMap, ok = varMap[kayMap].(VariableMap)
+                tempMap, ok = varMap[keyMap].(VariableMap)
             } else if index == lenKeyArray-1 {
-                fvalue, ok = tempMap[kayMap]
+                fvalue, ok = tempMap[keyMap]
             } else {
-                tempMap, ok = tempMap[kayMap].(VariableMap)
+                tempMap, ok = tempMap[keyMap].(VariableMap)
             }
         }
     } else {
