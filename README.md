@@ -113,7 +113,7 @@ list of basic functions :
 - `{{@uppercase variable}}`
 - `{{@uppercaseFirst variable}}`
 - `{{@lowercase variable}}`
-- `{{@casefold variable}}`
+<!-- - `{{@casefold variable}}` -->
 - `{{@swapcase variable}}`
 - `{{@time}}`
 - `{{@date}}`

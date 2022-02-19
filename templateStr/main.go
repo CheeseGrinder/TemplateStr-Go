@@ -12,7 +12,7 @@ import (
 
     "unicode"
 
-    "golang.org/x/text/cases"
+    // "golang.org/x/text/cases"
 )
 
 type Any = interface{}
@@ -87,14 +87,14 @@ func getVariable(key string, varMap VariableMap, ) (Any, bool) {
     return fvalue, ok
 }
 
-func checkExistFuncStr(functionArray FuncArray, compareStr string) bool {
+func checkExistFuncStr(functionArray FuncArray, compareStr string) (bool, int, string) {
 
-    for _, function := range functionArray {
-        if getNameFunc(function) == compareStr {
-            return true
+    for index, function := range functionArray {
+        if nameFunc := getNameFunc(function); nameFunc == compareStr {
+            return true, index, nameFunc
         }
     }
-    return false
+    return false, 0, "None"
 }
 
 func swapCase(str string) string {
@@ -270,7 +270,7 @@ func (t TemplateStr) ParseFunction(text string) string {
 
     if !t.HasFunction(text) { return text }
 
-    c := cases.Fold()
+    // c := cases.Fold()
 
     for _, group := range findAllGroup(regFunction, text) {
 
@@ -291,32 +291,30 @@ func (t TemplateStr) ParseFunction(text string) string {
         case "uppercase": text = strings.Replace(text, match, strings.ToUpper(key), -1)
         case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(key), -1)
         case "lowercase": text = strings.Replace(text, match, strings.ToLower(key), -1)
-        case "casefold": text = strings.Replace(text, match, c.String(key), -1)
+        // case "casefold": text = strings.Replace(text, match, c.String(key), -1)
         case "swapcase": text = strings.Replace(text, match, swapCase(key), -1)
         case "time": text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
         case "date": text = strings.Replace(text, match, dateTime.Format("02/01/2006"), -1)
         case "dateTime": text = strings.Replace(text, match, dateTime.Format("02/01/2006 15:04:05"), -1)
         default:
-            if checkExistFuncStr(t.funcArray, functionName) {
+            if ok, index, customFuncstr := checkExistFuncStr(t.funcArray, functionName); ok {
 
-                for _, customFunc := range t.funcArray {
-    
-                    customFuncstr := getNameFunc(customFunc)
-    
-                    if functionName == customFuncstr{
-                        var resultTextfunc string
+                customFunc := t.funcArray[index]
+
+                if functionName == customFuncstr{
+                    var resultTextfunc string
+                    
+                    if group["key"] != "" {
                         
-                        if group["key"] != "" {
-                            
-                            resultTextfunc = customFunc(typing(group["key"], t.variableMap))
-    
-                        } else {
-                            resultTextfunc = customFunc([]Any{})
-                        }
-    
-                        text = strings.Replace(text, match, resultTextfunc, -1)
-                    } 
-                }
+                        resultTextfunc = customFunc(typing(group["key"], t.variableMap))
+
+                    } else {
+                        resultTextfunc = customFunc([]Any{})
+                    }
+
+                    text = strings.Replace(text, match, resultTextfunc, -1)
+                } 
+
             } else {
                 text = "(NoFunction " + functionName + ")"
             }
