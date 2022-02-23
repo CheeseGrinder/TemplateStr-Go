@@ -37,10 +37,10 @@ parser.Parse(text)
 ```
 
 - `Parse(text: string) string` : parse all (variable, function, condition and switch)
-- `ParseVariable(text: string) string` : parse Variable ; {{$variable}}
-- `ParseFunction(text: string) string` : parse Function ; {{@function}}
-- `ParseCondition(text: string) string` : parse Condition ; {{#var1 == var2: value1 || value2}}
-- `ParseSwitch(text: string) string` : parse Switch ; {{?var; value1=#0F0, 56=#00F, ..., default=#000}}
+- `ParseVariable(text: string) string` : parse Variable ; ${{variable}}
+- `ParseFunction(text: string) string` : parse Function ; @{{function}}
+- `ParseCondition(text: string) string` : parse Condition ; #{{var1 == var2: value1 || value2}}
+- `ParseSwitch(text: string) string` : parse Switch ; ?{{var; value1=#0F0, 56=#00F, ..., default=#000}}
 - `HasVariable(text: string) bool` : check if there are any Variable
 - `HasFunction(text: string) bool` : check if there are any Function
 - `HasCondition(text: string) bool` : check if there are any Condition
@@ -53,20 +53,18 @@ parser.Parse(text)
 </br>
 
 The syntax of the Variables is like if : 
-- `{{$variable}}` 
-- `{{$dict.variable}}`
-- `{{$dictM.dict1.variable. ...}}`
+- `${{variable}}` 
+- `${{dict.variable}}`
+- `${{dictM.dict1.variable. ...}}`
 
 if the value does not exist then `None` is return
 
 ```go
-import "github.com/CheeseGrinder/TemplateStr-Go/templateStr"
-
 var varMap = VarMap{
     "variable": "yes",
 }
 
-text := "are you a variable : {{$variable}}"
+text := "are you a variable : ${{variable}}"
 
 parser := templateStr.New(FuncArray{}, varMap)
 
@@ -74,15 +72,13 @@ println(parser.Parse(text))
 ```
 
 ```go
-import "github.com/CheeseGrinder/TemplateStr-Go/templateStr"
-
 var varMap = VarMap{
     "variable": VarMap{
         "value": "yes",
     },
 }
 
-text := "are you a variable : {{$variable.value}}"
+text := "are you a variable : ${{variable.value}}"
 
 parser := templateStr.New(FuncArray{}, varMap)
 
@@ -107,26 +103,24 @@ are you a variable : yes
 <summary><strong>Function</strong></summary>
 </br>
 
-The syntax of the Function is like if : `{{@function variable}}`
+The syntax of the Function is like if : `@{{function variable}}`
 
 list of basic functions : 
-- `{{@uppercase variable}}`
-- `{{@uppercaseFirst variable}}`
-- `{{@lowercase variable}}`
-<!-- - `{{@casefold variable}}` -->
-- `{{@swapcase variable}}`
-- `{{@time}}`
-- `{{@date}}`
-- `{{@dateTime}}`
+- `@{{uppercase variable}}`
+- `@{{uppercaseFirst variable}}`
+- `@{{lowercase variable}}`
+<!-- - `@{{casefold variable}}` -->
+- `@{{swapcase variable}}`
+- `@{{time}}`
+- `@{{date}}`
+- `@{{dateTime}}`
 
 ```go
-import "github.com/CheeseGrinder/TemplateStr-Go/templateStr"
-
 var varMap = VarMap{
     "variable": "no",
 }
 
-text := "is lower case : {{@uppercase variable}}"
+text := "is lower case : @{{uppercase variable}}"
 
 parser := templateStr.New(FuncArray{}, varMap)
 
@@ -150,7 +144,7 @@ is lower case : NO
 <summary><strong>Custom Function</strong></summary>
 </br>
 
-The syntax of the Custom Function is like if : `{{@customFunction param1 param2 ...}}`
+The syntax of the Custom Function is like if : `@{{customFunction param1 param2 ...}}`
 
 `Typing` can be used at the parameter level of custom functions
 
@@ -158,17 +152,16 @@ parameters to be passed in a list
 
 the custom function must necessarily return a str
 
-```python
-from PyTempStr import TemplateStr
+```go
+func customFunc(list []Any) string{
+    return strings.Replace(list[0], "no", "maybe", -1)
+}
 
-def customFunc(list: list) -> str:
-    return list[0].replace('no', 'maybe')
+text := "are you a customFunction : @{{customFunc 'no'}}"
 
-text = 'are you a customFunction : {{@customFunc "no"}}'
+parser := templateStr.New(FuncArray{customFunc}, varMap)
 
-parser = TemplateStr(functionList=[customFunc])
-
-print(parser.parse(text))
+println(parser.Parse(text))
 ```
 The codes will return
 
@@ -183,7 +176,7 @@ are you a customFunction : maybe
 </br>
 
 The syntax of the Condition is like if : 
-- `{{#var1 == var2: value1 || value2}}`
+- `#{{var1 == var2: value1 || value2}}`
 
 comparator:
 - `==`
@@ -207,7 +200,7 @@ from PyTempStr import TemplateStr
 
 varDict = {'var1':'no', 'var2':'o2'}
 
-text = 'are you a variable : {{#"test" == var2: yes || no}}'
+text = 'are you a variable : #{{"test" == var2: yes || no}}'
 
 parser = TemplateStr(variableDict=varDict)
 
@@ -237,8 +230,8 @@ are you a variable : no
 </br>
 
 The syntax of the Switch is like if : 
-- `{{?var; value1=#0F0, 56=#00F, ..., default=#000}}`
-- `{{?var:type; 16=#0F0, 56=#00F, ..., default=#000}}`
+- `?{{var; value1=#0F0, 56=#00F, ..., default=#000}}`
+- `?{{var:type; 16=#0F0, 56=#00F, ..., default=#000}}`
 
 `var` can be typed, if it is typed then all the `values` will be typed of the same type
 
@@ -254,7 +247,7 @@ varDict = {
     'variable':'yes'
 }
 
-text = '=( {{?variable; yes=#A, no=#B, maybe=#C, default=#000}} )='
+text = '=( ?{{variable; yes=#A, no=#B, maybe=#C, default=#000}} )='
 
 parser = TemplateStr(variableDict=varDict)
 
@@ -268,7 +261,7 @@ varDict = {
     'variable': 42
 }
 
-text = '=( {{?variable:int; 42=#A, 32=#B, 22=#C, default=#000}} )='
+text = '=( ?{{variable:int; 42=#A, 32=#B, 22=#C, default=#000}} )='
 
 parser = TemplateStr(variableDict=varDict)
 

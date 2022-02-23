@@ -20,10 +20,10 @@ type VariableMap map[string]Any
 type Func func([]Any) string
 type FuncArray []Func
 
-var regVariable = regex.MustCompile(`(?P<match>{{\$(?P<key>[^{{$}}]+)}})`)
-var regFunction = regex.MustCompile(`(?P<match>{{@(?P<function>[^{@}\s]+) ?(?P<key>[^{@}]+)?}})`)
-var regCondition = regex.MustCompile(`(?P<match>{{#(?P<compValue1>[^{#}]+) (?P<compSymbol>[=!<>][=]?) (?P<compValue2>[^{#}]+): (?P<resultValue1>[^{}]+) \|\| (?P<resultValue2>[^{}]+)}})`)
-var regSwitch = regex.MustCompile(`(?P<match>{{\?(?:(?P<key>[^{?}:]+)|(?P<keyTyped>[^{?}]+):(?P<type>str|int|float)); (?P<val>(?:[^{}]+)=(?:[^{}]+)), default=(?P<default>[^{}]+)}})`)
+var regVariable = regex.MustCompile(`(?P<match>\${{(?P<key>[^{{$}}]+)}})`)
+var regFunction = regex.MustCompile(`(?P<match>@{{(?P<function>[^{@}\s]+) ?(?P<key>[^{@}]+)?}})`)
+var regCondition = regex.MustCompile(`(?P<match>#{{(?P<compValue1>[^{#}]+) (?P<compSymbol>[=!<>][=]?) (?P<compValue2>[^{#}]+): (?P<resultValue1>[^{}]+) \|\| (?P<resultValue2>[^{}]+)}})`)
+var regSwitch = regex.MustCompile(`(?P<match>\?{{(?:(?P<key>[^{?}:]+)|(?P<keyTyped>[^{?}]+):(?P<type>str|int|float)); (?P<val>(?:[^{}]+)=(?:[^{}]+)), default=(?P<default>[^{}]+)}})`)
 var regTyping = regex.MustCompile(`\"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|<b:(?P<bool>True|False)>|<n:(?P<number>[0-9_.]+)>|(?P<variable>[^<>\" ]+)`)
 
 // Construtor
