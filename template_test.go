@@ -46,20 +46,22 @@ func testType(list []Any) string {
 
 var arrayFunc = FuncArray{test, testType}
 var varMap = VarMap{
-    "name": "Jame", 
-    "age": 32, 
-    "bool": true, 
+    "Build": "Succes",
+    "var": "int",
+    "str": "Jame",
+    "int": 32,
+    "float": 4.2,
+    "bool": true,
     "lower": "azerty", 
     "upper": "AZERTY", 
     "swap": "AzErTy",
     // "cfold": "grüßen",
-    "Build": "Succes",
-    "dict": VarMap{
-        "value": "dict in dict",
+    "Map": VarMap{
+        "value": "Map in Map",
     },
-    "dictMaster": VarMap{
-        "dict1": VarMap{
-            "value": "dict in dict in dict",
+    "MasterMap": VarMap{
+        "SecondMap": VarMap{
+            "value": "Map in Map in Map",
         },
     },
 }
@@ -67,7 +69,7 @@ var varMap = VarMap{
 func TestAll(t *testing.T) {
     
     testAll_1 := []string{
-        "@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> age}} - @{{uppercaseFirst test}} - #{{'text' >= <n:4>: yes || no}} - ${{name}}",
+        "@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> int}} - @{{uppercaseFirst test}} - #{{'text' >= <n:4>: yes || no}} - ${{str}}",
          "text text text true 123 123.4 32 - None - yes - Jame",
         }
 
@@ -89,9 +91,9 @@ func TestAll(t *testing.T) {
 
 func TestVariable(t *testing.T) {
 
-    text_1 := []string{"var bool = ${{bool}} and name = ${{name}}", "var bool = true and name = Jame"}
-    text_2 := []string{"${{dict.value}}", "dict in dict"}
-    text_3 := []string{"${{dictMaster.dict1.value}}", "dict in dict in dict"}
+    text_1 := []string{"var bool = ${{bool}} and name = ${{str}}", "var bool = true and name = Jame"}
+    text_2 := []string{"${{Map.value}}", "Map in Map"}
+    text_3 := []string{"${{MasterMap.SecondMap.value}}", "Map in Map in Map"}
     text_4 := []string{"${{word}}", "None"}
     text_5 := []string{"${{dict.dict1.value}}", "None"}
 
@@ -104,7 +106,7 @@ func TestVariable(t *testing.T) {
     if text := parser.ParseVariable(text_5[0]); text != text_5[1] {t.Fatalf("text_5 : '" + Red + text + Reset + "' != '" + Yellow + text_5[1] + Reset + "'")}
 
 }
-func TestFunction(t *testing.T) {
+func TestInternFunction(t *testing.T) {
 
     uppercase := []string{"@{{uppercase lower}}", "AZERTY"}
     uppercase2 := []string{"@{{uppercase word}}", "NONE"}
@@ -141,7 +143,7 @@ func TestFunction(t *testing.T) {
 func TestCustomFunction(t *testing.T) {
     
     test := []string{"@{{test}}", "Test1"}
-    testType := []string{"@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> age}}", "text text text true 123 123.4 32"}
+    testType := []string{"@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> int}}", "text text text true 123 123.4 32"}
 
     parser := tem.New(arrayFunc, varMap)
 
@@ -769,8 +771,8 @@ func TestConditionInferior(t *testing.T) {
 
 func TestSwitch(t *testing.T) {
     
-    text_Switch_1 := []string{"?{{name; Jame=#0, Tony:=#1, Marco:=#2, default=#default}}", "#0"}
-    text_Switch_2 := []string{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", "#2"}
+    text_Switch_1 := []string{"?{{str; Jame=#0, Tony:=#1, Marco:=#2, default=#default}}", "#0"}
+    text_Switch_2 := []string{"?{{int:int; 56=#0, 36=#1, 32=#2, default=#default}}", "#2"}
 
     parser := tem.New(arrayFunc, varMap)
 
