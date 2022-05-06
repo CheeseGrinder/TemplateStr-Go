@@ -44,8 +44,8 @@ func testType(list []Any) string {
     return finalStr
 }
 
-var arrayFunc = FuncArray{test, testType}
-var varMap = VarMap{
+var arrayFunc FuncArray = FuncArray{testType, test}
+var varMap VarMap = VarMap{
     "Build": "Succes",
     "var": "int",
     "str": "Jame",
@@ -69,14 +69,15 @@ var varMap = VarMap{
 func TestAll(t *testing.T) {
     
     testAll_1 := []string{
-        "@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> int}} - @{{uppercaseFirst test}} - #{{'text' >= <n:4>: yes || no}} - ${{str}}",
-         "text text text true 123 123.4 32 - None - yes - Jame",
+        "Name is @{{uppercase str}}, ${{int}} years old. Map: ${{Map.value}}. my keyboard: #{{lower == 'azerty': azerty || qwerty}}, ?{{lower; azerty=yes, AZERTY=no, default=anyway}}",
+         "Name is JAME, 32 years old. Map: Map in Map. my keyboard: azerty, yes",
         }
 
-    testAll_2 := []string{
-        "Color: #{{Build == 'Succes': #00FF00 || #FF0000 }}",
-            "Color: #00FF00",
-        }
+    testAll_2 := []string{"test var in var ${{${{var}}}}", "test var in var 32"}
+    testAll_3 := []string{"test func in func @{{lowercase @{{uppercase str}}}}", "test func in func none"}
+    testAll_4 := []string{"test if in if #{{lower == 'azerty2': azerty || #{{lower == 'querty': yes || no}}}}","test if in if no"}
+    testAll_5 := []string{"test switch in switch ?{{str; Jame=?{{Build; Succes=#0, Failed:=#1, default=#default}}, Tony=#1, Marco=#2, default=#default}}", "test switch in switch #0"}
+    testAll_6 := []string{"test wtf ?{{str; Jame=?{{${{var}}:int; 32=#0, 36=#1, default=#default}}, Tony=#1, Marco=#2, default=#default2}}", "test wtf #0"}
 
     parser := tem.New(arrayFunc, varMap)
 
@@ -86,6 +87,22 @@ func TestAll(t *testing.T) {
 
     if text := parser.Parse(testAll_2[0]); text != testAll_2[1] {
         t.Fatalf("testAll_2 : '" + Red + text + Reset + "' != '" + Yellow + testAll_2[1] + Reset + "'")
+    }
+    
+    if text := parser.Parse(testAll_3[0]); text != testAll_3[1] {
+        t.Fatalf("testAll_3 : '" + Red + text + Reset + "' != '" + Yellow + testAll_3[1] + Reset + "'")
+    }
+    
+    if text := parser.Parse(testAll_4[0]); text != testAll_4[1] {
+        t.Fatalf("testAll_4 : '" + Red + text + Reset + "' != '" + Yellow + testAll_4[1] + Reset + "'")
+    }
+    
+    if text := parser.Parse(testAll_5[0]); text != testAll_5[1] {
+        t.Fatalf("testAll_5 : '" + Red + text + Reset + "' != '" + Yellow + testAll_5[1] + Reset + "'")
+    }
+    
+    if text := parser.Parse(testAll_6[0]); text != testAll_6[1] {
+        t.Fatalf("testAll_6 : '" + Red + text + Reset + "' != '" + Yellow + testAll_6[1] + Reset + "'")
     }
 }
 
@@ -782,6 +799,37 @@ func TestSwitch(t *testing.T) {
 
     if text := parser.Parse(text_Switch_2[0]); text != text_Switch_2[1] {
         t.Fatalf("text_Switch_2 : '" + Red + text + Reset + "' != '" + Yellow + text_Switch_2[1] + Reset + "'")
+    }
+}
+
+func TestHasOne(t *testing.T) {
+    
+    text_Has_One_1 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", true}
+    text_Has_One_2 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ${{bool}}", true}
+    text_Has_One_3 := []Any{"@{{uppercase ${{var}}}} and ${{name}}", true}
+    text_Has_One_4 := []Any{"text", false}
+    text_Has_One_5 := []Any{"%{{bool}}", false}
+
+    parser := tem.New(FuncArray{}, VarMap{})
+
+    if text := parser.HasOne(fmt.Sprintf("%v",text_Has_One_1[0])); text != text_Has_One_1[1] {
+        t.Fatalf("text_Has_One_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_1[1]) + Reset + "'")
+    }
+
+    if text := parser.HasOne(fmt.Sprintf("%v",text_Has_One_2[0])); text != text_Has_One_2[1] {
+        t.Fatalf("text_Has_One_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_2[1]) + Reset + "'")
+    }
+
+    if text := parser.HasOne(fmt.Sprintf("%v",text_Has_One_3[0])); text != text_Has_One_3[1] {
+        t.Fatalf("text_Has_One_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_3[1]) + Reset + "'")
+    }
+    
+    if text := parser.HasOne(fmt.Sprintf("%v",text_Has_One_4[0])); text != text_Has_One_4[1] {
+        t.Fatalf("text_Has_One_4 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_4[1]) + Reset + "'")
+    }
+    
+    if text := parser.HasOne(fmt.Sprintf("%v",text_Has_One_5[0])); text != text_Has_One_5[1] {
+        t.Fatalf("text_Has_One_5 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_5[1]) + Reset + "'")
     }
 }
 

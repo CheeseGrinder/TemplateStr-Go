@@ -1,16 +1,19 @@
-# TemplateStr-Go
-
-### TemplateStr allows to add variable, function and condition in a string.
 
 <div align="center">
-    <img src="https://img.shields.io/static/v1?label=Go&message=1.17&color=5c5c5c&labelColor=000000&style=flat-square&logo=Go&logoColor=00ADD8"/>
-    <img src="https://img.shields.io/github/downloads/CheeseGrinder/TemplateStr-Go/total?label=Download&style=flat-square"/>
+    <h1>TemplateStr-Go</h1>
+    <h3>TemplateStr allows to add variable, function, condition and switch in a string.</h3>
+    <img src="https://img.shields.io/static/v1?label=Go&message=1.11%5E&color=22CFFA&style=flat-square&logo=Go&logoColor=00ADD8"/>
     <a href="https://github.com/CheeseGrinder/TemplateStr-Go/actions/workflows/python-app.yml">
         <img src="https://img.shields.io/github/workflow/status/CheeseGrinder/TemplateStr-Go/Go Test?label=Test&style=flat-square"/>
     </a>
 </div>
 
-<strong>Import : </strong>
+#### Install :
+```
+go get -u github.com/CheeseGrinder/TemplateStr-Go/templateStr@latest
+```
+
+#### Import :
 
 ```go
 import (
@@ -21,16 +24,54 @@ type VarMap = templateStr.VariableMap
 type FuncArray = templateStr.FuncArray
 ```
 
-<strong>Construtor : </strong>
+#### Construtor :
 
 ```go
-parser := templateStr.New(arrayFunc, varMap)
+parser := templateStr.New(funcArray, varMap)
 ```
 
-- `arrayFunc` : is a array of Functions you want to pass to be called in your text
-- `varMap` : is a map of the Variables you want to pass to be called in your text
+<ul>
+<li>
+<details>
+<summary><code>funcArray</code>: is a array of Functions you want to pass to be called in your text</summary><br>
 
-<strong>Function : </strong>
+```go
+var funcArray FuncArray = FuncArray{meCustomFunc, otherCustomFunc}
+```
+
+</details>
+</li>
+<li>
+<details>
+<summary><code>varMap</code>: is a map of the Variables you want to pass to be called in your text</summary><br>
+
+```go
+var varMap VarMap = VarMap{
+    "Build": "Succes",
+    "var": "int",
+    "str": "Jame",
+    "int": 32,
+    "float": 4.2,
+    "bool": true,
+    "lower": "azerty",
+    "upper": "AZERTY",
+    "swap": "AzErTy",
+    "Map": VarMap{
+        "value": "Map in Map",
+    },
+    "MasterMap": VarMap{
+        "SecondMap": VarMap{
+            "value": "Map in Map in Map",
+        },
+    },
+}
+```
+
+</details>
+</li>
+</ul>
+
+#### Function :
 
 ```go
 parser.Parse(text)
@@ -38,24 +79,25 @@ parser.Parse(text)
 
 - `Parse(text: string) string` : parse all (variable, function, condition and switch)
 - `ParseVariable(text: string) string` : parse Variable ; ${{variable}}
-- `ParseFunction(text: string) string` : parse Function ; @{{function}}
+- `ParseFunction(text: string) string` : parse Function and Custom Function ; @{{function}}
 - `ParseCondition(text: string) string` : parse Condition ; #{{var1 == var2: value1 || value2}}
-- `ParseSwitch(text: string) string` : parse Switch ; ?{{var; value1=#0F0, 56=#00F, ..., default=#000}}
+- `ParseSwitch(text: string) string` : parse Switch ; ?{{var; value1=#0F0, value2=#00F, ..., default=#000}}
 - `HasVariable(text: string) bool` : check if there are any Variable
 - `HasFunction(text: string) bool` : check if there are any Function
 - `HasCondition(text: string) bool` : check if there are any Condition
 - `HasSwitch(text: string) bool` : check if there are any Switch
+- `HasOne(text: string) bool` : check if there are one syntaxe
 
-#### Exemple Syntaxe
+#### Exemple Syntaxe :
 
 <details>
 <summary><strong>Variable</strong></summary>
 </br>
 
 The syntax of the Variables is like if : 
-- `${{variable}}` 
-- `${{dict.variable}}`
-- `${{dictM.dict1.variable. ...}}`
+- `${{variable}}`
+- `${{Map.value}}`
+- `${{MasterMap.SecondMap.value. ...}}`
 
 if the value does not exist then `None` is return
 
@@ -106,10 +148,10 @@ are you a variable : yes
 The syntax of the Function is like if : `@{{function variable}}`
 
 list of basic functions : 
+
 - `@{{uppercase variable}}`
 - `@{{uppercaseFirst variable}}`
 - `@{{lowercase variable}}`
-<!-- - `@{{casefold variable}}` -->
 - `@{{swapcase variable}}`
 - `@{{time}}`
 - `@{{date}}`
@@ -195,26 +237,31 @@ comparator:
 
 `Typing` can be used at `var1` and `var2` level
 
-```python
-from PyTempStr import TemplateStr
+```go
+var varMap = VarMap{
+    "var1": "no",
+    "var2": "o2",
+}
 
-varDict = {'var1':'no', 'var2':'o2'}
+text := "are you a variable : #{{'test' == var2: yes || no}}"
 
-text = 'are you a variable : #{{"test" == var2: yes || no}}'
+parse := templateStr.New(FuncArray{}, varMap)
 
-parser = TemplateStr(variableDict=varDict)
-
-print(parser.parse(text))
+println(parser.Parse(text))
 ```
-```python
-var1 = 'no'
-var2 = 'o2'
+```go
+var1 := "no"
+var2 := "o2"
 
-if "test" == var2:
-    text = 'yes'
-else:
-    text = 'no'
-print('are you a variable : ' + text)
+var text string
+
+if "test" == var2 {
+    text = "yes"
+} else {
+    text = "no"
+}
+
+println(text)
 ```
 
 The 2 codes will return
@@ -230,8 +277,8 @@ are you a variable : no
 </br>
 
 The syntax of the Switch is like if : 
-- `?{{var; value1=#0F0, 56=#00F, ..., default=#000}}`
-- `?{{var:type; 16=#0F0, 56=#00F, ..., default=#000}}`
+- `?{{var; value1=#0F0, value2=#00F, ..., default=#000}}`
+- `?{{var:type; value1=#0F0, value2=#00F, ..., default=#000}}`
 
 `var` can be typed, if it is typed then all the `values` will be typed of the same type
 
@@ -240,47 +287,44 @@ type accept :
 - `int`
 - `float`
 
-```python
-from PyTempStr import TemplateStr
-
-varDict = {
-    'variable':'yes'
+```go
+var varMap = VarMap{
+    "variable": "yes",
 }
 
-text = '=( ?{{variable; yes=#A, no=#B, maybe=#C, default=#000}} )='
+text := "=( ?{{variable; yes=#A, no=#B, maybe=#C, default=#000}} )="
 
-parser = TemplateStr(variableDict=varDict)
+parse := templateStr.New(FuncArray{}, varMap)
 
-print(parser.parse(text))
+println(parser.Parse(text))
 ```
-
-```python
-from PyTempStr import TemplateStr
-
-varDict = {
-    'variable': 42
+```go
+var varMap = VarMap{
+    "variable": 42,
 }
 
-text = '=( ?{{variable:int; 42=#A, 32=#B, 22=#C, default=#000}} )='
+text := "=( ?{{variable:int; 42=#A, 32=#B, 22=#C, default=#000}} )="
 
-parser = TemplateStr(variableDict=varDict)
+parse := templateStr.New(FuncArray{}, varMap)
 
-print(parser.parse(text))
+println(parser.Parse(text))
 ```
+```go
+var result string
+variable := "yes"
 
-```python
-variable = 'yes'
-
-if variable == "yes":
+switch variable {
+case "yes":
     result = "#A"
-elif variable == "no":
+case "no":
     result = "#B"
-elif variable == "maybe":
+case "maybe":
     result = "#C"
-else
+default:
     result = "#000"
+}
 
-print('=( ' + result + ' )=')
+println(result)
 ```
 
 The 3 codes will return
@@ -291,9 +335,7 @@ The 3 codes will return
 
 </details>
 
-<details>
-<summary><strong>Typing</strong></summary>
-</br>
+#### Typing :
 
 | format                       | type    | description                                                       | return                 |
 |------------------------------|---------|-------------------------------------------------------------------|------------------------|
@@ -302,14 +344,6 @@ The 3 codes will return
 | \<n:123>                     | `int`   |                                                                   | 123                    |
 | \<n:123.4>                   | `float` |                                                                   | 123.4                  |
 | "text" or 'text' or \`text\` | `str`   |                                                                   | text                   |
-
-</details>
-
-
-### Install
-
-- Download : [latest](https://github.com/CheeseGrinder/TemplateStr-Python/releases/latest)
-- `pip install *.whl`
 
 ### TODO
 

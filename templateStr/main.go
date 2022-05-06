@@ -232,13 +232,16 @@ func ternary(cond bool, val1 string, val2 string) string {
 // return -> string
 func (t TemplateStr) Parse(text string) string {
 
-    text = t.ParseVariable(text)
+    for t.HasOne(text) {
 
-    text = t.ParseFunction(text)
+        text = t.ParseVariable(text)
 
-    text = t.ParseCondition(text)
+        text = t.ParseFunction(text)
 
-    text = t.ParseSwitch(text)
+        text = t.ParseCondition(text)
+
+        text = t.ParseSwitch(text)
+    }
 
     return text
 }
@@ -250,14 +253,16 @@ func (t TemplateStr) ParseVariable(text string) string {
 
     if !t.HasVariable(text) { return text }
 
-    for _, v := range findAllGroup(regVariable, text) {
+    for t.HasVariable(text) {
+        for _, v := range findAllGroup(regVariable, text) {
 
-        value, _ := getVariable(v["key"], t.variableMap)
-
-        key := fmt.Sprintf("%v", value)
-        match := v["match"]
-
-        text = strings.Replace(text, match, key, -1)
+            value, _ := getVariable(v["key"], t.variableMap)
+    
+            key := fmt.Sprintf("%v", value)
+            match := v["match"]
+    
+            text = strings.Replace(text, match, key, -1)
+        }
     }
 
     return text
@@ -272,51 +277,54 @@ func (t TemplateStr) ParseFunction(text string) string {
 
     // c := cases.Fold()
 
-    for _, group := range findAllGroup(regFunction, text) {
+    for t.HasFunction(text) {
 
-        match := group["match"]
-        
-        var key string
-        dateTime := time.Now()
-
-        if value, ok := getVariable(group["key"], t.variableMap); ok && fmt.Sprintf("%v", value) != ""{
-            key = fmt.Sprintf("%v", value)
-        } else {
-            key = "None"
-        }
-
-        functionName := group["function"]
-
-        switch functionName {
-        case "uppercase": text = strings.Replace(text, match, strings.ToUpper(key), -1)
-        case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(key), -1)
-        case "lowercase": text = strings.Replace(text, match, strings.ToLower(key), -1)
-        // case "casefold": text = strings.Replace(text, match, c.String(key), -1)
-        case "swapcase": text = strings.Replace(text, match, swapCase(key), -1)
-        case "time": text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
-        case "date": text = strings.Replace(text, match, dateTime.Format("02/01/2006"), -1)
-        case "dateTime": text = strings.Replace(text, match, dateTime.Format("02/01/2006 15:04:05"), -1)
-        default:
-            if ok, index, customFuncstr := checkExistFuncStr(t.funcArray, functionName); ok {
-
-                customFunc := t.funcArray[index]
-
-                if functionName == customFuncstr{
-                    var resultTextfunc string
-                    
-                    if group["key"] != "" {
-                        
-                        resultTextfunc = customFunc(typing(group["key"], t.variableMap))
-
-                    } else {
-                        resultTextfunc = customFunc([]Any{})
-                    }
-
-                    text = strings.Replace(text, match, resultTextfunc, -1)
-                } 
-
+        for _, group := range findAllGroup(regFunction, text) {
+    
+            match := group["match"]
+            
+            var key string
+            dateTime := time.Now()
+    
+            if value, ok := getVariable(group["key"], t.variableMap); ok && fmt.Sprintf("%v", value) != ""{
+                key = fmt.Sprintf("%v", value)
             } else {
-                text = "(NoFunction " + functionName + ")"
+                key = "None"
+            }
+    
+            functionName := group["function"]
+    
+            switch functionName {
+            case "uppercase": text = strings.Replace(text, match, strings.ToUpper(key), -1)
+            case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(key), -1)
+            case "lowercase": text = strings.Replace(text, match, strings.ToLower(key), -1)
+            // case "casefold": text = strings.Replace(text, match, c.String(key), -1)
+            case "swapcase": text = strings.Replace(text, match, swapCase(key), -1)
+            case "time": text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
+            case "date": text = strings.Replace(text, match, dateTime.Format("02/01/2006"), -1)
+            case "dateTime": text = strings.Replace(text, match, dateTime.Format("02/01/2006 15:04:05"), -1)
+            default:
+                if ok, index, customFuncstr := checkExistFuncStr(t.funcArray, functionName); ok {
+    
+                    customFunc := t.funcArray[index]
+    
+                    if functionName == customFuncstr{
+                        var resultTextfunc string
+                        
+                        if group["key"] != "" {
+                            
+                            resultTextfunc = customFunc(typing(group["key"], t.variableMap))
+    
+                        } else {
+                            resultTextfunc = customFunc([]Any{})
+                        }
+    
+                        text = strings.Replace(text, match, resultTextfunc, -1)
+                    } 
+    
+                } else {
+                    text = "(NoFunction " + functionName + ")"
+                }
             }
         }
     }
@@ -331,34 +339,38 @@ func (t TemplateStr) ParseCondition(text string) string {
 
     if !t.HasCondition(text) { return text }
 
-    for _, group := range findAllGroup(regCondition, text) {
+    for t.HasCondition(text) {
 
-        match := group["match"]
-        compValue1 := group["compValue1"]
-        compValue2 := group["compValue2"]
-        compSymbol := group["compSymbol"]
-        resultValue1 := group["resultValue1"]
-        resultValue2 := group["resultValue2"]
-
-        ArrayTyping := typing(compValue1 + " " + compValue2, t.variableMap)
-        
-        if compSymbol == "==" {
-            text = strings.Replace(text, match, ternary(ArrayTyping[0] == ArrayTyping[1], resultValue1, resultValue2), -1)
-        } else if compSymbol == "!=" {
-            text = strings.Replace(text, match, ternary(ArrayTyping[0] != ArrayTyping[1], resultValue1, resultValue2), -1)
-        } else {
-            v1, v2 := convertInterfaceToFloat(ArrayTyping[0], ArrayTyping[1])
-            if compSymbol == "<=" {
-                text = strings.Replace(text, match, ternary(v1 <= v2, resultValue1, resultValue2), -1)
-            } else if compSymbol == ">=" {
-                text = strings.Replace(text, match, ternary(v1 >= v2, resultValue1, resultValue2), -1)
-            } else if compSymbol == "<" {
-                text = strings.Replace(text, match, ternary(v1 < v2, resultValue1, resultValue2), -1)
-            } else if compSymbol == ">" {
-                text = strings.Replace(text, match, ternary(v1 > v2, resultValue1, resultValue2), -1)
+        for _, group := range findAllGroup(regCondition, text) {
+    
+            match := group["match"]
+            compValue1 := group["compValue1"]
+            compValue2 := group["compValue2"]
+            compSymbol := group["compSymbol"]
+            resultValue1 := group["resultValue1"]
+            resultValue2 := group["resultValue2"]
+    
+            ArrayTyping := typing(compValue1 + " " + compValue2, t.variableMap)
+            
+            if compSymbol == "==" {
+                text = strings.Replace(text, match, ternary(ArrayTyping[0] == ArrayTyping[1], resultValue1, resultValue2), -1)
+            } else if compSymbol == "!=" {
+                text = strings.Replace(text, match, ternary(ArrayTyping[0] != ArrayTyping[1], resultValue1, resultValue2), -1)
+            } else {
+                v1, v2 := convertInterfaceToFloat(ArrayTyping[0], ArrayTyping[1])
+                if compSymbol == "<=" {
+                    text = strings.Replace(text, match, ternary(v1 <= v2, resultValue1, resultValue2), -1)
+                } else if compSymbol == ">=" {
+                    text = strings.Replace(text, match, ternary(v1 >= v2, resultValue1, resultValue2), -1)
+                } else if compSymbol == "<" {
+                    text = strings.Replace(text, match, ternary(v1 < v2, resultValue1, resultValue2), -1)
+                } else if compSymbol == ">" {
+                    text = strings.Replace(text, match, ternary(v1 > v2, resultValue1, resultValue2), -1)
+                }
             }
         }
     }
+
     return text
 }
 
@@ -370,46 +382,61 @@ func (t TemplateStr) ParseSwitch(text string) string {
 
     if !t.HasSwitch(text) { return text }
 
-    for _, group := range findAllGroup(regSwitch, text) {
+    for t.HasSwitch(text) {
 
-        match := group["match"]
-
-        mapTemp := map[string]string{}
-        var result string
-
-        for _, n := range strings.Split(group["val"], ", ") {
-            keyValue := strings.Split(n, "=")
-            mapTemp[keyValue[0]] = keyValue[1]
-        }
-
-        if group["key"] != "" {
-            for key, value := range mapTemp {
-                if key == t.variableMap[group["key"]] {
-                    result = value
-                    break
-                } else {
-                    result = group["default"]
+        for _, group := range findAllGroup(regSwitch, text) {
+    
+            match := group["match"]
+    
+            mapTemp := map[string]string{}
+            var result string
+    
+            for _, n := range strings.Split(group["val"], ", ") {
+                keyValue := strings.Split(n, "=")
+                mapTemp[keyValue[0]] = keyValue[1]
+            }
+    
+            if group["key"] != "" {
+                for key, value := range mapTemp {
+                    if key == t.variableMap[group["key"]] {
+                        result = value
+                        break
+                    } else {
+                        result = group["default"]
+                    }
+                }
+    
+            } else if group["keyTyped"] != ""{
+                keyVar := group["keyTyped"]
+                typeVar := group["type"]
+                
+                for key, value := range mapTemp {
+                    // println(fmt.Sprintf("%T", typing(key, t.variableMap, typeVar)[0]))
+                    if valVar, _ := getVariable(keyVar, t.variableMap); typing(key, t.variableMap, typeVar)[0] == valVar {
+                        result = value
+                        break
+                    } else {
+                        result = group["default"]
+                    }
                 }
             }
-
-        } else if group["keyTyped"] != ""{
-            keyVar := group["keyTyped"]
-            typeVar := group["type"]
-            
-            for key, value := range mapTemp {
-                // println(fmt.Sprintf("%T", typing(key, t.variableMap, typeVar)[0]))
-                if valVar, _ := getVariable(keyVar, t.variableMap); typing(key, t.variableMap, typeVar)[0] == valVar {
-                    result = value
-                    break
-                } else {
-                    result = group["default"]
-                }
-            }
+    
+            text = strings.Replace(text, match, result, -1)
         }
-
-        text = strings.Replace(text, match, result, -1)
     }
+
     return text
+}
+
+// Detects if there is the presence of min one syntaxe
+//
+// return -> bool
+func (t TemplateStr) HasOne(text string) bool {
+
+    if t.HasVariable(text) || t.HasFunction(text) || t.HasCondition(text) || t.HasSwitch(text) {
+        return true
+    }
+    return false
 }
 
 // Detects if there is the presence of `{{$variable}}`
