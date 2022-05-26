@@ -78,15 +78,15 @@ parser.Parse(text)
 ```
 
 - `Parse(text: string) string` : parse all (variable, function, condition and switch)
-- `ParseVariable(text: string) string` : parse Variable ; ${{variable}}
-- `ParseFunction(text: string) string` : parse Function and Custom Function ; @{{function}}
-- `ParseCondition(text: string) string` : parse Condition ; #{{var1 == var2: value1 || value2}}
-- `ParseSwitch(text: string) string` : parse Switch ; ?{{var; value1=#0F0, value2=#00F, ..., default=#000}}
+- `ParseVariable(text: string) string` : parse Variable ; ${{variableName}}
+- `ParseFunction(text: string) string` : parse Function and Custom Function ; @{{functionName}}
+- `ParseCondition(text: string) string` : parse Condition ; #{{value1 == value2; trueValue | falseValue}}
+- `ParseSwitch(text: string) string` : parse Switch ; ?{{var; value1:#0F0, value2:#00F, ..., _:#000}}
+- `HasOne(text: string) bool` : check if there are one syntaxe
 - `HasVariable(text: string) bool` : check if there are any Variable
 - `HasFunction(text: string) bool` : check if there are any Function
 - `HasCondition(text: string) bool` : check if there are any Condition
 - `HasSwitch(text: string) bool` : check if there are any Switch
-- `HasOne(text: string) bool` : check if there are one syntaxe
 
 #### Exemple Syntaxe :
 
@@ -145,14 +145,14 @@ are you a variable : yes
 <summary><strong>Function</strong></summary>
 </br>
 
-The syntax of the Function is like if : `@{{function variable}}`
+The syntax of the Function is like if : `@{{function; parameter}}` or `@{{function}}`
 
 list of basic functions : 
 
-- `@{{uppercase variable}}`
-- `@{{uppercaseFirst variable}}`
-- `@{{lowercase variable}}`
-- `@{{swapcase variable}}`
+- `@{{uppercase; variableName}}`
+- `@{{uppercaseFirst; variableName}}`
+- `@{{lowercase; variableName}}`
+- `@{{swapcase; variableName}}`
 - `@{{time}}`
 - `@{{date}}`
 - `@{{dateTime}}`
@@ -162,7 +162,7 @@ var varMap = VarMap{
     "variable": "no",
 }
 
-text := "is lower case : @{{uppercase variable}}"
+text := "is lower case : @{{uppercase; variable}}"
 
 parser := templateStr.New(FuncArray{}, varMap)
 
@@ -186,7 +186,7 @@ is lower case : NO
 <summary><strong>Custom Function</strong></summary>
 </br>
 
-The syntax of the Custom Function is like if : `@{{customFunction param1 param2 ...}}`
+The syntax of the Custom Function is like if : `@{{customFunction; param1 param2 ...}}`
 
 `Typing` can be used at the parameter level of custom functions
 
@@ -199,7 +199,7 @@ func customFunc(list []Any) string{
     return strings.Replace(list[0], "no", "maybe", -1)
 }
 
-text := "are you a customFunction : @{{customFunc 'no'}}"
+text := "are you a customFunction : @{{customFunc; 'no'}}"
 
 parser := templateStr.New(FuncArray{customFunc}, varMap)
 
@@ -218,7 +218,7 @@ are you a customFunction : maybe
 </br>
 
 The syntax of the Condition is like if : 
-- `#{{var1 == var2: value1 || value2}}`
+- `#{{value1 == value2; trueValue | falseValue}}`
 
 comparator:
 - `==`
@@ -233,9 +233,9 @@ comparator:
 - `bool` it's the value in int that is compared (True = 1)
 
 
-`var1` is compared with `var2`
+`value1` is compared with `value2`
 
-`Typing` can be used at `var1` and `var2` level
+`Typing` can be used at `value1` and `value2` level
 
 ```go
 var varMap = VarMap{
@@ -277,12 +277,12 @@ are you a variable : no
 </br>
 
 The syntax of the Switch is like if : 
-- `?{{var; value1=#0F0, value2=#00F, ..., default=#000}}`
-- `?{{var:type; value1=#0F0, value2=#00F, ..., default=#000}}`
+- `?{{variableName; value1:#0F0, value2:#00F, ..., _:#000}}`
+- `?{{type/variableName; value1:#0F0, value2:#00F, ..., _:#000}}`
 
 `var` can be typed, if it is typed then all the `values` will be typed of the same type
 
-type accept :
+type :
 - `str`
 - `int`
 - `float`
@@ -292,7 +292,7 @@ var varMap = VarMap{
     "variable": "yes",
 }
 
-text := "=( ?{{variable; yes=#A, no=#B, maybe=#C, default=#000}} )="
+text := "=( ?{{variable; yes:#A, no:#B, maybe:#C, _:#000}} )="
 
 parse := templateStr.New(FuncArray{}, varMap)
 
@@ -303,7 +303,7 @@ var varMap = VarMap{
     "variable": 42,
 }
 
-text := "=( ?{{variable:int; 42=#A, 32=#B, 22=#C, default=#000}} )="
+text := "=( ?{{int/variable; 42:#A, 32:#B, 22:#C, _:#000}} )="
 
 parse := templateStr.New(FuncArray{}, varMap)
 
@@ -339,10 +339,10 @@ The 3 codes will return
 
 | format                       | type    | description                                                       | return                 |
 |------------------------------|---------|-------------------------------------------------------------------|------------------------|
-| keyVariable                  | `*`     | is the key of the value in the dictionary pass to the constructor | value of `keyVariable` |
-| \<b:True>                    | `bool`  |                                                                   | True                   |
-| \<n:123>                     | `int`   |                                                                   | 123                    |
-| \<n:123.4>                   | `float` |                                                                   | 123.4                  |
+| variableName                 | `*`     | is the key of the value in the dictionary pass to the constructor | value of `variableName`|
+| b/True                       | `bool`  |                                                                   | True                   |
+| i/123                        | `int`   |                                                                   | 123                    |
+| f/123.4                      | `float` |                                                                   | 123.4                  |
 | "text" or 'text' or \`text\` | `str`   |                                                                   | text                   |
 
 ### TODO

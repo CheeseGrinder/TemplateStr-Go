@@ -20,11 +20,11 @@ type VariableMap map[string]Any
 type Func func([]Any) string
 type FuncArray []Func
 
-var regVariable = regex.MustCompile(`(?P<match>\${{(?P<key>[^{{$}}]+)}})`)
-var regFunction = regex.MustCompile(`(?P<match>@{{(?P<function>[^{@}\s]+) ?(?P<key>[^{@}]+)?}})`)
-var regCondition = regex.MustCompile(`(?P<match>#{{(?P<compValue1>[^{#}]+) (?P<compSymbol>[=!<>][=]?) (?P<compValue2>[^{#}]+): (?P<resultValue1>[^{}]+) \|\| (?P<resultValue2>[^{}]+)}})`)
-var regSwitch = regex.MustCompile(`(?P<match>\?{{(?:(?P<key>[^{?}:]+)|(?P<keyTyped>[^{?}]+):(?P<type>str|int|float)); (?P<val>(?:[^{}]+)=(?:[^{}]+)), default=(?P<default>[^{}]+)}})`)
-var regTyping = regex.MustCompile(`\"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|<b:(?P<bool>True|False)>|<n:(?P<number>[0-9_.]+)>|(?P<variable>[^<>\" ]+)`)
+var regVariable = regex.MustCompile(`(?P<match>\${{(?P<key>[\w._-]+)}})`)
+var regFunction = regex.MustCompile(`(?P<match>@{{(?P<functionName>[^{@}\s]+)(?:; (?P<parameters>[^{@}]+))?}})`)
+var regCondition = regex.MustCompile(`(?P<match>#{{(?P<conditionValue1>[^{#}]+) (?P<conditionSymbol>==|!=|<=|<|>=|>) (?P<conditionValue2>[^{#}]+); (?P<trueValue>[^{}]+) \| (?P<falseValue>[^{}]+)}})`)
+var regSwitch = regex.MustCompile(`(?P<match>\?{{(?:(?P<key>[^{?}/]+)|(?P<type>str|int|float)/(?P<tKey>[^{?}]+)); (?P<values>(?:[^{}]+):(?:[^{}]+)), _:(?P<defaultValue>[^{}]+)}})`)
+var regTyping = regex.MustCompile(`\"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|b/(?P<bool>[Tt]rue|[Ff]alse)|i/(?P<int>[0-9_]+)|f/(?P<float>[0-9_.]+)|(?P<variable>[^<>\" ]+)`)
 
 // Construtor
 type TemplateStr struct {
@@ -189,14 +189,12 @@ func typing(str string, varMap VariableMap, typing ...string) []Any {
             } else if groupParam["bool"] != "" { 
                 bool, _ := strconv.ParseBool(groupParam["bool"])
                 arrayTyping = append(arrayTyping, bool)
-            } else if groupParam["number"] != "" {
-                if !strings.Contains(groupParam["number"], ".") {
-                    int, _ := strconv.Atoi(groupParam["number"])
-                    arrayTyping = append(arrayTyping, int)
-                } else {
-                    float, _ := strconv.ParseFloat(groupParam["number"], 64)
-                    arrayTyping = append(arrayTyping, float)
-                }
+            } else if groupParam["int"] != "" {
+                int, _ := strconv.Atoi(groupParam["int"])
+                arrayTyping = append(arrayTyping, int)
+            } else if groupParam["float"] != "" {
+                float, _ := strconv.ParseFloat(groupParam["float"], 64)
+                arrayTyping = append(arrayTyping, float)
             } else if groupParam["variable"] != "" {
                 value, _ := getVariable(groupParam["variable"], varMap)
                 arrayTyping = append(arrayTyping, fmt.Sprintf("%v", value))
@@ -282,48 +280,41 @@ func (t TemplateStr) ParseFunction(text string) string {
         for _, group := range findAllGroup(regFunction, text) {
     
             match := group["match"]
+            parameters := group["parameters"]
             
-            var key string
+            var value string = "None"
             dateTime := time.Now()
     
-            if value, ok := getVariable(group["key"], t.variableMap); ok && fmt.Sprintf("%v", value) != ""{
-                key = fmt.Sprintf("%v", value)
-            } else {
-                key = "None"
+            if v, ok := getVariable(parameters, t.variableMap); ok && fmt.Sprintf("%v", v) != ""{
+                value = fmt.Sprintf("%v", v)
             }
-    
-            functionName := group["function"]
+
+            functionName := group["functionName"]
     
             switch functionName {
-            case "uppercase": text = strings.Replace(text, match, strings.ToUpper(key), -1)
-            case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(key), -1)
-            case "lowercase": text = strings.Replace(text, match, strings.ToLower(key), -1)
+            case "uppercase": text = strings.Replace(text, match, strings.ToUpper(value), -1)
+            case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(value), -1)
+            case "lowercase": text = strings.Replace(text, match, strings.ToLower(value), -1)
             // case "casefold": text = strings.Replace(text, match, c.String(key), -1)
-            case "swapcase": text = strings.Replace(text, match, swapCase(key), -1)
+            case "swapcase": text = strings.Replace(text, match, swapCase(value), -1)
             case "time": text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
             case "date": text = strings.Replace(text, match, dateTime.Format("02/01/2006"), -1)
             case "dateTime": text = strings.Replace(text, match, dateTime.Format("02/01/2006 15:04:05"), -1)
             default:
                 if ok, index, customFuncstr := checkExistFuncStr(t.funcArray, functionName); ok {
-    
                     customFunc := t.funcArray[index]
-    
+                    
                     if functionName == customFuncstr{
                         var resultTextfunc string
-                        
-                        if group["key"] != "" {
-                            
-                            resultTextfunc = customFunc(typing(group["key"], t.variableMap))
-    
+                        if parameters != "" {
+                            resultTextfunc = customFunc(typing(parameters, t.variableMap))
                         } else {
                             resultTextfunc = customFunc([]Any{})
                         }
-    
                         text = strings.Replace(text, match, resultTextfunc, -1)
-                    } 
-    
+                    }
                 } else {
-                    text = "(NoFunction " + functionName + ")"
+                    panic("[Function "+ functionName +" not exist]")
                 }
             }
         }
@@ -344,28 +335,28 @@ func (t TemplateStr) ParseCondition(text string) string {
         for _, group := range findAllGroup(regCondition, text) {
     
             match := group["match"]
-            compValue1 := group["compValue1"]
-            compValue2 := group["compValue2"]
-            compSymbol := group["compSymbol"]
-            resultValue1 := group["resultValue1"]
-            resultValue2 := group["resultValue2"]
+            conditionValue1 := group["conditionValue1"]
+            conditionValue2 := group["conditionValue2"]
+            conditionSymbol := group["conditionSymbol"]
+            trueValue := group["trueValue"]
+            falseValue := group["falseValue"]
     
-            ArrayTyping := typing(compValue1 + " " + compValue2, t.variableMap)
+            ArrayTyping := typing(conditionValue1 + " " + conditionValue2, t.variableMap)
             
-            if compSymbol == "==" {
-                text = strings.Replace(text, match, ternary(ArrayTyping[0] == ArrayTyping[1], resultValue1, resultValue2), -1)
-            } else if compSymbol == "!=" {
-                text = strings.Replace(text, match, ternary(ArrayTyping[0] != ArrayTyping[1], resultValue1, resultValue2), -1)
+            if conditionSymbol == "==" {
+                text = strings.Replace(text, match, ternary(ArrayTyping[0] == ArrayTyping[1], trueValue, falseValue), -1)
+            } else if conditionSymbol == "!=" {
+                text = strings.Replace(text, match, ternary(ArrayTyping[0] != ArrayTyping[1], trueValue, falseValue), -1)
             } else {
                 v1, v2 := convertInterfaceToFloat(ArrayTyping[0], ArrayTyping[1])
-                if compSymbol == "<=" {
-                    text = strings.Replace(text, match, ternary(v1 <= v2, resultValue1, resultValue2), -1)
-                } else if compSymbol == ">=" {
-                    text = strings.Replace(text, match, ternary(v1 >= v2, resultValue1, resultValue2), -1)
-                } else if compSymbol == "<" {
-                    text = strings.Replace(text, match, ternary(v1 < v2, resultValue1, resultValue2), -1)
-                } else if compSymbol == ">" {
-                    text = strings.Replace(text, match, ternary(v1 > v2, resultValue1, resultValue2), -1)
+                if conditionSymbol == "<=" {
+                    text = strings.Replace(text, match, ternary(v1 <= v2, trueValue, falseValue), -1)
+                } else if conditionSymbol == ">=" {
+                    text = strings.Replace(text, match, ternary(v1 >= v2, trueValue, falseValue), -1)
+                } else if conditionSymbol == "<" {
+                    text = strings.Replace(text, match, ternary(v1 < v2, trueValue, falseValue), -1)
+                } else if conditionSymbol == ">" {
+                    text = strings.Replace(text, match, ternary(v1 > v2, trueValue, falseValue), -1)
                 }
             }
         }
@@ -391,8 +382,8 @@ func (t TemplateStr) ParseSwitch(text string) string {
             mapTemp := map[string]string{}
             var result string
     
-            for _, n := range strings.Split(group["val"], ", ") {
-                keyValue := strings.Split(n, "=")
+            for _, n := range strings.Split(group["values"], ", ") {
+                keyValue := strings.Split(n, ":")
                 mapTemp[keyValue[0]] = keyValue[1]
             }
     
@@ -402,12 +393,12 @@ func (t TemplateStr) ParseSwitch(text string) string {
                         result = value
                         break
                     } else {
-                        result = group["default"]
+                        result = group["defaultValue"]
                     }
                 }
     
-            } else if group["keyTyped"] != ""{
-                keyVar := group["keyTyped"]
+            } else if group["tKey"] != ""{
+                keyVar := group["tKey"]
                 typeVar := group["type"]
                 
                 for key, value := range mapTemp {
@@ -416,7 +407,7 @@ func (t TemplateStr) ParseSwitch(text string) string {
                         result = value
                         break
                     } else {
-                        result = group["default"]
+                        result = group["defaultValue"]
                     }
                 }
             }

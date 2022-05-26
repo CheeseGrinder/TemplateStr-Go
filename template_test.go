@@ -69,15 +69,15 @@ var varMap VarMap = VarMap{
 func TestAll(t *testing.T) {
     
     testAll_1 := []string{
-        "Name is @{{uppercase str}}, ${{int}} years old. Map: ${{Map.value}}. my keyboard: #{{lower == 'azerty': azerty || qwerty}}, ?{{lower; azerty=yes, AZERTY=no, default=anyway}}",
+        "Name is @{{uppercase; str}}, ${{int}} years old. Map: ${{Map.value}}. my keyboard: #{{lower == 'azerty'; azerty | qwerty}}, ?{{lower; azerty:yes, AZERTY:no, _:anyway}}",
          "Name is JAME, 32 years old. Map: Map in Map. my keyboard: azerty, yes",
         }
 
     testAll_2 := []string{"test var in var ${{${{var}}}}", "test var in var 32"}
-    testAll_3 := []string{"test func in func @{{lowercase @{{uppercase str}}}}", "test func in func none"}
-    testAll_4 := []string{"test if in if #{{lower == 'azerty2': azerty || #{{lower == 'querty': yes || no}}}}","test if in if no"}
-    testAll_5 := []string{"test switch in switch ?{{str; Jame=?{{Build; Succes=#0, Failed:=#1, default=#default}}, Tony=#1, Marco=#2, default=#default}}", "test switch in switch #0"}
-    testAll_6 := []string{"test wtf ?{{str; Jame=?{{${{var}}:int; 32=#0, 36=#1, default=#default}}, Tony=#1, Marco=#2, default=#default2}}", "test wtf #0"}
+    testAll_3 := []string{"test func in func @{{lowercase; @{{uppercase; str}}}}", "test func in func none"}
+    testAll_4 := []string{"test if in if #{{lower == 'azerty2'; azerty | #{{lower == 'querty'; yes | no}}}}","test if in if no"}
+    testAll_5 := []string{"test switch in switch ?{{str; Jame:?{{Build; Succes:#0, Failed:#1, _:#default}}, Tony:#1, Marco:#2, _:#default}}", "test switch in switch #0"}
+    testAll_6 := []string{"test wtf ?{{str; Jame:?{{int/${{var}}; 32:#0, 36:#1, _:#default}}, Tony:#1, Marco:#2, _:#default2}}", "test wtf #0"}
 
     parser := tem.New(arrayFunc, varMap)
 
@@ -125,12 +125,12 @@ func TestVariable(t *testing.T) {
 }
 func TestInternFunction(t *testing.T) {
 
-    uppercase := []string{"@{{uppercase lower}}", "AZERTY"}
-    uppercase2 := []string{"@{{uppercase word}}", "NONE"}
-    uppercaseFirst := []string{"@{{uppercaseFirst lower}}", "Azerty"}
-    lowercase := []string{"@{{lowercase upper}}", "azerty"}
+    uppercase := []string{"@{{uppercase; lower}}", "AZERTY"}
+    uppercase2 := []string{"@{{uppercase; word}}", "NONE"}
+    uppercaseFirst := []string{"@{{uppercaseFirst; lower}}", "Azerty"}
+    lowercase := []string{"@{{lowercase; upper}}", "azerty"}
     // casefold := []string{"@{{casefold cfold}}", "grüssen"}
-    swapcase := []string{"@{{swapcase swap}}", "aZeRtY"}
+    swapcase := []string{"@{{swapcase; swap}}", "aZeRtY"}
     time := "@{{time}}"
     date := "@{{date}}"
     dateTime := "@{{dateTime}}"
@@ -160,7 +160,7 @@ func TestInternFunction(t *testing.T) {
 func TestCustomFunction(t *testing.T) {
     
     test := []string{"@{{test}}", "Test1"}
-    testType := []string{"@{{testType \"text\" 'text' `text` <b:True> <n:123> <n:123.4> int}}", "text text text true 123 123.4 32"}
+    testType := []string{"@{{testType; \"text\" 'text' `text` b/True i/123 f/123.4 int}}", "text text text true 123 123.4 32"}
 
     parser := tem.New(arrayFunc, varMap)
 
@@ -174,11 +174,11 @@ func TestCustomFunction(t *testing.T) {
 
 func TestConditionEqual(t *testing.T) {
     
-    str_Equal_Str := []string{"#{{'text' == 'text': yes || no}}", "yes"}
-    str_Equal2_Str := []string{"#{{'text' == 'texte': yes || no}}", "no"}
-    int_Equal_Str := []string{"#{{<n:4> == 'text': yes || no}}", "no"}
-    float_Equal_Str := []string{"#{{<n:4.5> == 'texte': yes || no}}", "no"}
-    bool_Equal_Str := []string{"#{{<b:True> == 'texte': yes || no}}", "no"}
+    str_Equal_Str := []string{"#{{'text' == 'text'; yes | no}}", "yes"}
+    str_Equal2_Str := []string{"#{{'text' == 'texte'; yes | no}}", "no"}
+    int_Equal_Str := []string{"#{{i/4 == 'text'; yes | no}}", "no"}
+    float_Equal_Str := []string{"#{{f/4.5 == 'texte'; yes | no}}", "no"}
+    bool_Equal_Str := []string{"#{{b/True == 'texte'; yes | no}}", "no"}
 
     parser := tem.New(FuncArray{}, varMap)
 
@@ -191,11 +191,11 @@ func TestConditionEqual(t *testing.T) {
 
 func TestConditionNotEqual(t *testing.T) {
 
-    str_Not_Equal_Str := []string{"#{{'text' != 'text': yes || no}}", "no"}
-    str_Not_Equal2_Str := []string{"#{{'text' != 'texte': yes || no}}", "yes"}
-    int_Not_Equal_Str := []string{"#{{<n:4> != 'text': yes || no}}", "yes"}
-    float_Not_Equal_Str := []string{"#{{<n:4.5> != 'texte': yes || no}}", "yes"}
-    bool_Not_Equal_Str := []string{"#{{<b:True> != 'texte': yes || no}}", "yes"}
+    str_Not_Equal_Str := []string{"#{{'text' != 'text'; yes | no}}", "no"}
+    str_Not_Equal2_Str := []string{"#{{'text' != 'texte'; yes | no}}", "yes"}
+    int_Not_Equal_Str := []string{"#{{i/4 != 'text'; yes | no}}", "yes"}
+    float_Not_Equal_Str := []string{"#{{f/4.5 != 'texte'; yes | no}}", "yes"}
+    bool_Not_Equal_Str := []string{"#{{b/True != 'texte'; yes | no}}", "yes"}
 
     parser := tem.New(FuncArray{}, varMap)
 
@@ -211,14 +211,14 @@ func TestConditionSuperiorEqual(t *testing.T) {
     parser := tem.New(FuncArray{}, varMap)
 
     // String
-    str_Superior_Equal_Str := []string{"#{{'text' >= 'text': yes || no}}", "yes"}
-    str_Superior_Equal2_Str := []string{"#{{'text' >= 'texte': yes || no}}", "no"}
-    str_Superior_Equal_Int := []string{"#{{'text' >= <n:4>: yes || no}}", "yes"}
-    str_Superior_Equal2_Int := []string{"#{{'text' >= <n:123>: yes || no}}", "no"}
-    str_Superior_Equal_Float := []string{"#{{'text' >= <n:4.5>: yes || no}}", "no"}
-    str_Superior_Equal2_Float := []string{"#{{'text' >= <n:3.5>: yes || no}}", "yes"}
-    str_Superior_Equal_Bool := []string{"#{{'text' >= <b:True>: yes || no}}", "yes"}
-    str_Superior_Equal2_Bool := []string{"#{{'text' >= <b:False>: yes || no}}", "yes"}
+    str_Superior_Equal_Str := []string{"#{{'text' >= 'text'; yes | no}}", "yes"}
+    str_Superior_Equal2_Str := []string{"#{{'text' >= 'texte'; yes | no}}", "no"}
+    str_Superior_Equal_Int := []string{"#{{'text' >= i/4; yes | no}}", "yes"}
+    str_Superior_Equal2_Int := []string{"#{{'text' >= i/123; yes | no}}", "no"}
+    str_Superior_Equal_Float := []string{"#{{'text' >= f/4.5; yes | no}}", "no"}
+    str_Superior_Equal2_Float := []string{"#{{'text' >= f/3.5; yes | no}}", "yes"}
+    str_Superior_Equal_Bool := []string{"#{{'text' >= b/True; yes | no}}", "yes"}
+    str_Superior_Equal2_Bool := []string{"#{{'text' >= b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(str_Superior_Equal_Str[0]); text != str_Superior_Equal_Str[1] {
         t.Fatalf("str_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal_Str[1] + Reset + "'")
@@ -246,14 +246,14 @@ func TestConditionSuperiorEqual(t *testing.T) {
     }
 
     // Int
-    int_Superior_Equal_Str := []string{"#{{<n:4> >= 'text': yes || no}}", "yes"}
-    int_Superior_Equal2_Str := []string{"#{{<n:4> >= 'texte': yes || no}}", "no"}
-    int_Superior_Equal_Int := []string{"#{{<n:4> >= <n:4>: yes || no}}", "yes"}
-    int_Superior_Equal2_Int := []string{"#{{<n:4> >= <n:5>: yes || no}}", "no"}
-    int_Superior_Equal_Float := []string{"#{{<n:4> >= <n:3.5>: yes || no}}", "yes"}
-    int_Superior_Equal2_Float := []string{"#{{<n:4> >= <n:4.5>: yes || no}}", "no"}
-    int_Superior_Equal_Bool := []string{"#{{<n:4> >= <b:True>: yes || no}}", "yes"}
-    int_Superior_Equal2_Bool := []string{"#{{<n:4> >= <b:False>: yes || no}}", "yes"}
+    int_Superior_Equal_Str := []string{"#{{i/4 >= 'text'; yes | no}}", "yes"}
+    int_Superior_Equal2_Str := []string{"#{{i/4 >= 'texte'; yes | no}}", "no"}
+    int_Superior_Equal_Int := []string{"#{{i/4 >= i/4; yes | no}}", "yes"}
+    int_Superior_Equal2_Int := []string{"#{{i/4 >= i/5; yes | no}}", "no"}
+    int_Superior_Equal_Float := []string{"#{{i/4 >= f/3.5; yes | no}}", "yes"}
+    int_Superior_Equal2_Float := []string{"#{{i/4 >= f/4.5; yes | no}}", "no"}
+    int_Superior_Equal_Bool := []string{"#{{i/4 >= b/True; yes | no}}", "yes"}
+    int_Superior_Equal2_Bool := []string{"#{{i/4 >= b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(int_Superior_Equal_Str[0]); text != int_Superior_Equal_Str[1] {
         t.Fatalf("int_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal_Str[1] + Reset + "'")
@@ -281,14 +281,14 @@ func TestConditionSuperiorEqual(t *testing.T) {
     }
 
     // Float
-    float_Superior_Equal_Str := []string{"#{{<n:4.5> >= 'text': yes || no}}", "yes"}
-    float_Superior_Equal2_Str := []string{"#{{<n:4.5> >= 'texte': yes || no}}", "no"}
-    float_Superior_Equal_Int := []string{"#{{<n:4.5> >= <n:4>: yes || no}}", "yes"}
-    float_Superior_Equal2_Int := []string{"#{{<n:4.5> >= <n:5>: yes || no}}", "no"}
-    float_Superior_Equal_Float := []string{"#{{<n:4.5> >= <n:4.4>: yes || no}}", "yes"}
-    float_Superior_Equal2_Float := []string{"#{{<n:4.5> >= <n:4.6>: yes || no}}", "no"}
-    float_Superior_Equal_Bool := []string{"#{{<n:4.5> >= <b:True>: yes || no}}", "yes"}
-    float_Superior_Equal2_Bool := []string{"#{{<n:4.5> >= <b:False>: yes || no}}", "yes"}
+    float_Superior_Equal_Str := []string{"#{{f/4.5 >= 'text'; yes | no}}", "yes"}
+    float_Superior_Equal2_Str := []string{"#{{f/4.5 >= 'texte'; yes | no}}", "no"}
+    float_Superior_Equal_Int := []string{"#{{f/4.5 >= i/4; yes | no}}", "yes"}
+    float_Superior_Equal2_Int := []string{"#{{f/4.5 >= i/5; yes | no}}", "no"}
+    float_Superior_Equal_Float := []string{"#{{f/4.5 >= f/4.5; yes | no}}", "yes"}
+    float_Superior_Equal2_Float := []string{"#{{f/4.5 >= f/4.6; yes | no}}", "no"}
+    float_Superior_Equal_Bool := []string{"#{{f/4.5 >= b/True; yes | no}}", "yes"}
+    float_Superior_Equal2_Bool := []string{"#{{f/4.5 >= b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(float_Superior_Equal_Str[0]); text != float_Superior_Equal_Str[1] {
         t.Fatalf("float_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal_Str[1] + Reset + "'")
@@ -316,14 +316,14 @@ func TestConditionSuperiorEqual(t *testing.T) {
     }
 
     // Bool
-    bool_Superior_Equal_Str := []string{"#{{<b:True> >= 'text': yes || no}}", "no"}
-    bool_Superior_Equal2_Str := []string{"#{{<b:False> >= 'texte': yes || no}}", "no"}
-    bool_Superior_Equal_Int := []string{"#{{<b:True> >= <n:4>: yes || no}}", "no"}
-    bool_Superior_Equal2_Int := []string{"#{{<b:False> >= <n:5>: yes || no}}", "no"}
-    bool_Superior_Equal_Float := []string{"#{{<b:True> >= <n:4.4>: yes || no}}", "no"}
-    bool_Superior_Equal2_Float := []string{"#{{<b:False> >= <n:4.6>: yes || no}}", "no"}
-    bool_Superior_Equal_Bool := []string{"#{{<b:True> >= <b:True>: yes || no}}", "yes"}
-    bool_Superior_Equal2_Bool := []string{"#{{<b:False> >= <b:False>: yes || no}}", "yes"}
+    bool_Superior_Equal_Str := []string{"#{{b/True >= 'text'; yes | no}}", "no"}
+    bool_Superior_Equal2_Str := []string{"#{{b/False >= 'texte'; yes | no}}", "no"}
+    bool_Superior_Equal_Int := []string{"#{{b/True >= i/4; yes | no}}", "no"}
+    bool_Superior_Equal2_Int := []string{"#{{b/False >= i/5; yes | no}}", "no"}
+    bool_Superior_Equal_Float := []string{"#{{b/True >= f/4.5; yes | no}}", "no"}
+    bool_Superior_Equal2_Float := []string{"#{{b/False >= f/4.6; yes | no}}", "no"}
+    bool_Superior_Equal_Bool := []string{"#{{b/True >= b/True; yes | no}}", "yes"}
+    bool_Superior_Equal2_Bool := []string{"#{{b/False >= b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(bool_Superior_Equal_Str[0]); text != bool_Superior_Equal_Str[1] {
         t.Fatalf("bool_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal_Str[1] + Reset + "'")
@@ -356,14 +356,14 @@ func TestConditionSuperior(t *testing.T) {
     parser := tem.New(FuncArray{}, varMap)
 
     // String
-    str_Superior_Str := []string{"#{{'text' > 'text': yes || no}}", "no"}
-    str_Superior2_Str := []string{"#{{'text' > 'texte': yes || no}}", "no"}
-    str_Superior_Int := []string{"#{{'text' > <n:4>: yes || no}}", "no"}
-    str_Superior2_Int := []string{"#{{'text' > <n:123>: yes || no}}", "no"}
-    str_Superior_Float := []string{"#{{'text' > <n:4.5>: yes || no}}", "no"}
-    str_Superior2_Float := []string{"#{{'text' > <n:3.5>: yes || no}}", "yes"}
-    str_Superior_Bool := []string{"#{{'text' > <b:True>: yes || no}}", "yes"}
-    str_Superior2_Bool := []string{"#{{'text' > <b:False>: yes || no}}", "yes"}
+    str_Superior_Str := []string{"#{{'text' > 'text'; yes | no}}", "no"}
+    str_Superior2_Str := []string{"#{{'text' > 'texte'; yes | no}}", "no"}
+    str_Superior_Int := []string{"#{{'text' > i/4; yes | no}}", "no"}
+    str_Superior2_Int := []string{"#{{'text' > i/123; yes | no}}", "no"}
+    str_Superior_Float := []string{"#{{'text' > f/4.5; yes | no}}", "no"}
+    str_Superior2_Float := []string{"#{{'text' > f/3.5; yes | no}}", "yes"}
+    str_Superior_Bool := []string{"#{{'text' > b/True; yes | no}}", "yes"}
+    str_Superior2_Bool := []string{"#{{'text' > b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(str_Superior_Str[0]); text != str_Superior_Str[1] {
         t.Fatalf("str_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Str[1] + Reset + "'")
@@ -391,14 +391,14 @@ func TestConditionSuperior(t *testing.T) {
     }
 
     // Int
-    int_Superior_Str := []string{"#{{<n:4> > 'text': yes || no}}", "no"}
-    int_Superior2_Str := []string{"#{{<n:4> > 'texte': yes || no}}", "no"}
-    int_Superior_Int := []string{"#{{<n:4> > <n:4>: yes || no}}", "no"}
-    int_Superior2_Int := []string{"#{{<n:4> > <n:5>: yes || no}}", "no"}
-    int_Superior_Float := []string{"#{{<n:4> > <n:3.5>: yes || no}}", "yes"}
-    int_Superior2_Float := []string{"#{{<n:4> > <n:4.5>: yes || no}}", "no"}
-    int_Superior_Bool := []string{"#{{<n:4> > <b:True>: yes || no}}", "yes"}
-    int_Superior2_Bool := []string{"#{{<n:4> > <b:False>: yes || no}}", "yes"}
+    int_Superior_Str := []string{"#{{i/4 > 'text'; yes | no}}", "no"}
+    int_Superior2_Str := []string{"#{{i/4 > 'texte'; yes | no}}", "no"}
+    int_Superior_Int := []string{"#{{i/4 > i/4; yes | no}}", "no"}
+    int_Superior2_Int := []string{"#{{i/4 > i/5; yes | no}}", "no"}
+    int_Superior_Float := []string{"#{{i/4 > f/3.5; yes | no}}", "yes"}
+    int_Superior2_Float := []string{"#{{i/4 > f/4.5; yes | no}}", "no"}
+    int_Superior_Bool := []string{"#{{i/4 > b/True; yes | no}}", "yes"}
+    int_Superior2_Bool := []string{"#{{i/4 > b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(int_Superior_Str[0]); text != int_Superior_Str[1] {
         t.Fatalf("int_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Str[1] + Reset + "'")
@@ -426,14 +426,14 @@ func TestConditionSuperior(t *testing.T) {
     }
 
     // Float
-    float_Superior_Str := []string{"#{{<n:4.5> > 'text': yes || no}}", "yes"}
-    float_Superior2_Str := []string{"#{{<n:4.5> > 'texte': yes || no}}", "no"}
-    float_Superior_Int := []string{"#{{<n:4.5> > <n:4>: yes || no}}", "yes"}
-    float_Superior2_Int := []string{"#{{<n:4.5> > <n:5>: yes || no}}", "no"}
-    float_Superior_Float := []string{"#{{<n:4.5> > <n:4.4>: yes || no}}", "yes"}
-    float_Superior2_Float := []string{"#{{<n:4.5> > <n:4.6>: yes || no}}", "no"}
-    float_Superior_Bool := []string{"#{{<n:4.5> > <b:True>: yes || no}}", "yes"}
-    float_Superior2_Bool := []string{"#{{<n:4.5> > <b:False>: yes || no}}", "yes"}
+    float_Superior_Str := []string{"#{{f/4.5 > 'text'; yes | no}}", "yes"}
+    float_Superior2_Str := []string{"#{{f/4.5 > 'texte'; yes | no}}", "no"}
+    float_Superior_Int := []string{"#{{f/4.5 > i/4; yes | no}}", "yes"}
+    float_Superior2_Int := []string{"#{{f/4.5 > i/5; yes | no}}", "no"}
+    float_Superior_Float := []string{"#{{f/4.5 > f/4.4; yes | no}}", "yes"}
+    float_Superior2_Float := []string{"#{{f/4.5 > f/4.6; yes | no}}", "no"}
+    float_Superior_Bool := []string{"#{{f/4.5 > b/True; yes | no}}", "yes"}
+    float_Superior2_Bool := []string{"#{{f/4.5 > b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(float_Superior_Str[0]); text != float_Superior_Str[1] {
         t.Fatalf("float_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Str[1] + Reset + "'")
@@ -461,14 +461,14 @@ func TestConditionSuperior(t *testing.T) {
     }
 
     // Bool
-    bool_Superior_Str := []string{"#{{<b:True> > 'text': yes || no}}", "no"}
-    bool_Superior2_Str := []string{"#{{<b:False> > 'texte': yes || no}}", "no"}
-    bool_Superior_Int := []string{"#{{<b:True> > <n:4>: yes || no}}", "no"}
-    bool_Superior2_Int := []string{"#{{<b:False> > <n:5>: yes || no}}", "no"}
-    bool_Superior_Float := []string{"#{{<b:True> > <n:4.4>: yes || no}}", "no"}
-    bool_Superior2_Float := []string{"#{{<b:False> > <n:4.6>: yes || no}}", "no"}
-    bool_Superior_Bool := []string{"#{{<b:True> > <b:True>: yes || no}}", "no"}
-    bool_Superior2_Bool := []string{"#{{<b:False> > <b:False>: yes || no}}", "no"}
+    bool_Superior_Str := []string{"#{{b/True > 'text'; yes | no}}", "no"}
+    bool_Superior2_Str := []string{"#{{b/False > 'texte'; yes | no}}", "no"}
+    bool_Superior_Int := []string{"#{{b/True > i/4; yes | no}}", "no"}
+    bool_Superior2_Int := []string{"#{{b/False > i/5; yes | no}}", "no"}
+    bool_Superior_Float := []string{"#{{b/True > f/4.5; yes | no}}", "no"}
+    bool_Superior2_Float := []string{"#{{b/False > f/4.6; yes | no}}", "no"}
+    bool_Superior_Bool := []string{"#{{b/True > b/True; yes | no}}", "no"}
+    bool_Superior2_Bool := []string{"#{{b/False > b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(bool_Superior_Str[0]); text != bool_Superior_Str[1] {
         t.Fatalf("bool_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Str[1] + Reset + "'")
@@ -501,14 +501,14 @@ func TestConditionInferiorEqual(t *testing.T) {
     parser := tem.New(FuncArray{}, varMap)
 
     // String
-    str_Inferior_Equal_Str := []string{"#{{'text' <= 'text': yes || no}}", "yes"}
-    str_Inferior_Equal2_Str := []string{"#{{'text' <= 'texte': yes || no}}", "yes"}
-    str_Inferior_Equal_Int := []string{"#{{'text' <= <n:4>: yes || no}}", "yes"}
-    str_Inferior_Equal2_Int := []string{"#{{'text' <= <n:123>: yes || no}}", "yes"}
-    str_Inferior_Equal_Float := []string{"#{{'text' <= <n:4.5>: yes || no}}", "yes"}
-    str_Inferior_Equal2_Float := []string{"#{{'text' <= <n:3.5>: yes || no}}", "no"}
-    str_Inferior_Equal_Bool := []string{"#{{'text' <= <b:True>: yes || no}}", "no"}
-    str_Inferior_Equal2_Bool := []string{"#{{'text' <= <b:False>: yes || no}}", "no"}
+    str_Inferior_Equal_Str := []string{"#{{'text' <= 'text'; yes | no}}", "yes"}
+    str_Inferior_Equal2_Str := []string{"#{{'text' <= 'texte'; yes | no}}", "yes"}
+    str_Inferior_Equal_Int := []string{"#{{'text' <= i/4; yes | no}}", "yes"}
+    str_Inferior_Equal2_Int := []string{"#{{'text' <= i/123; yes | no}}", "yes"}
+    str_Inferior_Equal_Float := []string{"#{{'text' <= f/4.5; yes | no}}", "yes"}
+    str_Inferior_Equal2_Float := []string{"#{{'text' <= f/3.5; yes | no}}", "no"}
+    str_Inferior_Equal_Bool := []string{"#{{'text' <= b/True; yes | no}}", "no"}
+    str_Inferior_Equal2_Bool := []string{"#{{'text' <= b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(str_Inferior_Equal_Str[0]); text != str_Inferior_Equal_Str[1] {
         t.Fatalf("str_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal_Str[1] + Reset + "'")
@@ -536,14 +536,14 @@ func TestConditionInferiorEqual(t *testing.T) {
     }
 
     // Int
-    int_Inferior_Equal_Str := []string{"#{{<n:4> <= 'text': yes || no}}", "yes"}
-    int_Inferior_Equal2_Str := []string{"#{{<n:4> <= 'texte': yes || no}}", "yes"}
-    int_Inferior_Equal_Int := []string{"#{{<n:4> <= <n:4>: yes || no}}", "yes"}
-    int_Inferior_Equal2_Int := []string{"#{{<n:4> <= <n:5>: yes || no}}", "yes"}
-    int_Inferior_Equal_Float := []string{"#{{<n:4> <= <n:3.5>: yes || no}}", "no"}
-    int_Inferior_Equal2_Float := []string{"#{{<n:4> <= <n:4.5>: yes || no}}", "yes"}
-    int_Inferior_Equal_Bool := []string{"#{{<n:4> <= <b:True>: yes || no}}", "no"}
-    int_Inferior_Equal2_Bool := []string{"#{{<n:4> <= <b:False>: yes || no}}", "no"}
+    int_Inferior_Equal_Str := []string{"#{{i/4 <= 'text'; yes | no}}", "yes"}
+    int_Inferior_Equal2_Str := []string{"#{{i/4 <= 'texte'; yes | no}}", "yes"}
+    int_Inferior_Equal_Int := []string{"#{{i/4 <= i/4; yes | no}}", "yes"}
+    int_Inferior_Equal2_Int := []string{"#{{i/4 <= i/5; yes | no}}", "yes"}
+    int_Inferior_Equal_Float := []string{"#{{i/4 <= f/3.5; yes | no}}", "no"}
+    int_Inferior_Equal2_Float := []string{"#{{i/4 <= f/4.5; yes | no}}", "yes"}
+    int_Inferior_Equal_Bool := []string{"#{{i/4 <= b/True; yes | no}}", "no"}
+    int_Inferior_Equal2_Bool := []string{"#{{i/4 <= b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(int_Inferior_Equal_Str[0]); text != int_Inferior_Equal_Str[1] {
         t.Fatalf("int_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal_Str[1] + Reset + "'")
@@ -571,14 +571,14 @@ func TestConditionInferiorEqual(t *testing.T) {
     }
 
     // Float
-    float_Inferior_Equal_Str := []string{"#{{<n:4.5> <= 'text': yes || no}}", "no"}
-    float_Inferior_Equal2_Str := []string{"#{{<n:4.5> <= 'texte': yes || no}}", "yes"}
-    float_Inferior_Equal_Int := []string{"#{{<n:4.5> <= <n:4>: yes || no}}", "no"}
-    float_Inferior_Equal2_Int := []string{"#{{<n:4.5> <= <n:5>: yes || no}}", "yes"}
-    float_Inferior_Equal_Float := []string{"#{{<n:4.5> <= <n:4.4>: yes || no}}", "no"}
-    float_Inferior_Equal2_Float := []string{"#{{<n:4.5> <= <n:4.6>: yes || no}}", "yes"}
-    float_Inferior_Equal_Bool := []string{"#{{<n:4.5> <= <b:True>: yes || no}}", "no"}
-    float_Inferior_Equal2_Bool := []string{"#{{<n:4.5> <= <b:False>: yes || no}}", "no"}
+    float_Inferior_Equal_Str := []string{"#{{f/4.5 <= 'text'; yes | no}}", "no"}
+    float_Inferior_Equal2_Str := []string{"#{{f/4.5 <= 'texte'; yes | no}}", "yes"}
+    float_Inferior_Equal_Int := []string{"#{{f/4.5 <= i/4; yes | no}}", "no"}
+    float_Inferior_Equal2_Int := []string{"#{{f/4.5 <= i/5; yes | no}}", "yes"}
+    float_Inferior_Equal_Float := []string{"#{{f/4.5 <= f/4.4; yes | no}}", "no"}
+    float_Inferior_Equal2_Float := []string{"#{{f/4.5 <= f/4.6; yes | no}}", "yes"}
+    float_Inferior_Equal_Bool := []string{"#{{f/4.5 <= b/True; yes | no}}", "no"}
+    float_Inferior_Equal2_Bool := []string{"#{{f/4.5 <= b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(float_Inferior_Equal_Str[0]); text != float_Inferior_Equal_Str[1] {
         t.Fatalf("float_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal_Str[1] + Reset + "'")
@@ -606,14 +606,14 @@ func TestConditionInferiorEqual(t *testing.T) {
     }
 
     // Bool
-    bool_Inferior_Equal_Str := []string{"#{{<b:True> <= 'text': yes || no}}", "yes"}
-    bool_Inferior_Equal2_Str := []string{"#{{<b:False> <= 'texte': yes || no}}", "yes"}
-    bool_Inferior_Equal_Int := []string{"#{{<b:True> <= <n:4>: yes || no}}", "yes"}
-    bool_Inferior_Equal2_Int := []string{"#{{<b:False> <= <n:5>: yes || no}}", "yes"}
-    bool_Inferior_Equal_Float := []string{"#{{<b:True> <= <n:4.4>: yes || no}}", "yes"}
-    bool_Inferior_Equal2_Float := []string{"#{{<b:False> <= <n:4.6>: yes || no}}", "yes"}
-    bool_Inferior_Equal_Bool := []string{"#{{<b:True> <= <b:True>: yes || no}}", "yes"}
-    bool_Inferior_Equal2_Bool := []string{"#{{<b:False> <= <b:False>: yes || no}}", "yes"}
+    bool_Inferior_Equal_Str := []string{"#{{b/True <= 'text'; yes | no}}", "yes"}
+    bool_Inferior_Equal2_Str := []string{"#{{b/False <= 'texte'; yes | no}}", "yes"}
+    bool_Inferior_Equal_Int := []string{"#{{b/True <= i/4; yes | no}}", "yes"}
+    bool_Inferior_Equal2_Int := []string{"#{{b/False <= i/5; yes | no}}", "yes"}
+    bool_Inferior_Equal_Float := []string{"#{{b/True <= f/4.5; yes | no}}", "yes"}
+    bool_Inferior_Equal2_Float := []string{"#{{b/False <= f/4.6; yes | no}}", "yes"}
+    bool_Inferior_Equal_Bool := []string{"#{{b/True <= b/True; yes | no}}", "yes"}
+    bool_Inferior_Equal2_Bool := []string{"#{{b/False <= b/False; yes | no}}", "yes"}
 
     if text := parser.ParseCondition(bool_Inferior_Equal_Str[0]); text != bool_Inferior_Equal_Str[1] {
         t.Fatalf("bool_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal_Str[1] + Reset + "'")
@@ -646,14 +646,14 @@ func TestConditionInferior(t *testing.T) {
     parser := tem.New(FuncArray{}, varMap)
 
     // String
-    str_Inferior_Str := []string{"#{{'text' < 'text': yes || no}}", "no"}
-    str_Inferior2_Str := []string{"#{{'text' < 'texte': yes || no}}", "yes"}
-    str_Inferior_Int := []string{"#{{'text' < <n:4>: yes || no}}", "no"}
-    str_Inferior2_Int := []string{"#{{'text' < <n:123>: yes || no}}", "yes"}
-    str_Inferior_Float := []string{"#{{'text' < <n:4.5>: yes || no}}", "yes"}
-    str_Inferior2_Float := []string{"#{{'text' < <n:3.5>: yes || no}}", "no"}
-    str_Inferior_Bool := []string{"#{{'text' < <b:True>: yes || no}}", "no"}
-    str_Inferior2_Bool := []string{"#{{'text' < <b:False>: yes || no}}", "no"}
+    str_Inferior_Str := []string{"#{{'text' < 'text'; yes | no}}", "no"}
+    str_Inferior2_Str := []string{"#{{'text' < 'texte'; yes | no}}", "yes"}
+    str_Inferior_Int := []string{"#{{'text' < i/4; yes | no}}", "no"}
+    str_Inferior2_Int := []string{"#{{'text' < i/123; yes | no}}", "yes"}
+    str_Inferior_Float := []string{"#{{'text' < f/4.5; yes | no}}", "yes"}
+    str_Inferior2_Float := []string{"#{{'text' < f/3.5; yes | no}}", "no"}
+    str_Inferior_Bool := []string{"#{{'text' < b/True; yes | no}}", "no"}
+    str_Inferior2_Bool := []string{"#{{'text' < b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(str_Inferior_Str[0]); text != str_Inferior_Str[1] {
         t.Fatalf("str_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Str[1] + Reset + "'")
@@ -681,14 +681,14 @@ func TestConditionInferior(t *testing.T) {
     }
 
     // Int
-    int_Inferior_Str := []string{"#{{<n:4> < 'text': yes || no}}", "no"}
-    int_Inferior2_Str := []string{"#{{<n:4> < 'texte': yes || no}}", "yes"}
-    int_Inferior_Int := []string{"#{{<n:4> < <n:4>: yes || no}}", "no"}
-    int_Inferior2_Int := []string{"#{{<n:4> < <n:5>: yes || no}}", "yes"}
-    int_Inferior_Float := []string{"#{{<n:4> < <n:3.5>: yes || no}}", "no"}
-    int_Inferior2_Float := []string{"#{{<n:4> < <n:4.5>: yes || no}}", "yes"}
-    int_Inferior_Bool := []string{"#{{<n:4> < <b:True>: yes || no}}", "no"}
-    int_Inferior2_Bool := []string{"#{{<n:4> < <b:False>: yes || no}}", "no"}
+    int_Inferior_Str := []string{"#{{i/4 < 'text'; yes | no}}", "no"}
+    int_Inferior2_Str := []string{"#{{i/4 < 'texte'; yes | no}}", "yes"}
+    int_Inferior_Int := []string{"#{{i/4 < i/4; yes | no}}", "no"}
+    int_Inferior2_Int := []string{"#{{i/4 < i/5; yes | no}}", "yes"}
+    int_Inferior_Float := []string{"#{{i/4 < f/3.5; yes | no}}", "no"}
+    int_Inferior2_Float := []string{"#{{i/4 < f/4.5; yes | no}}", "yes"}
+    int_Inferior_Bool := []string{"#{{i/4 < b/True; yes | no}}", "no"}
+    int_Inferior2_Bool := []string{"#{{i/4 < b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(int_Inferior_Str[0]); text != int_Inferior_Str[1] {
         t.Fatalf("int_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Str[1] + Reset + "'")
@@ -716,14 +716,14 @@ func TestConditionInferior(t *testing.T) {
     }
 
     // Float
-    float_Inferior_Str := []string{"#{{<n:4.5> < 'text': yes || no}}", "no"}
-    float_Inferior2_Str := []string{"#{{<n:4.5> < 'texte': yes || no}}", "yes"}
-    float_Inferior_Int := []string{"#{{<n:4.5> < <n:4>: yes || no}}", "no"}
-    float_Inferior2_Int := []string{"#{{<n:4.5> < <n:5>: yes || no}}", "yes"}
-    float_Inferior_Float := []string{"#{{<n:4.5> < <n:4.4>: yes || no}}", "no"}
-    float_Inferior2_Float := []string{"#{{<n:4.5> < <n:4.6>: yes || no}}", "yes"}
-    float_Inferior_Bool := []string{"#{{<n:4.5> < <b:True>: yes || no}}", "no"}
-    float_Inferior2_Bool := []string{"#{{<n:4.5> < <b:False>: yes || no}}", "no"}
+    float_Inferior_Str := []string{"#{{f/4.5 < 'text'; yes | no}}", "no"}
+    float_Inferior2_Str := []string{"#{{f/4.5 < 'texte'; yes | no}}", "yes"}
+    float_Inferior_Int := []string{"#{{f/4.5 < i/4; yes | no}}", "no"}
+    float_Inferior2_Int := []string{"#{{f/4.5 < i/5; yes | no}}", "yes"}
+    float_Inferior_Float := []string{"#{{f/4.5 < f/4.5; yes | no}}", "no"}
+    float_Inferior2_Float := []string{"#{{f/4.5 < f/4.6; yes | no}}", "yes"}
+    float_Inferior_Bool := []string{"#{{f/4.5 < b/True; yes | no}}", "no"}
+    float_Inferior2_Bool := []string{"#{{f/4.5 < b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(float_Inferior_Str[0]); text != float_Inferior_Str[1] {
         t.Fatalf("float_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Str[1] + Reset + "'")
@@ -751,14 +751,14 @@ func TestConditionInferior(t *testing.T) {
     }
 
     // Bool
-    bool_Inferior_Str := []string{"#{{<b:True> < 'text': yes || no}}", "yes"}
-    bool_Inferior2_Str := []string{"#{{<b:False> < 'texte': yes || no}}", "yes"}
-    bool_Inferior_Int := []string{"#{{<b:True> < <n:4>: yes || no}}", "yes"}
-    bool_Inferior2_Int := []string{"#{{<b:False> < <n:5>: yes || no}}", "yes"}
-    bool_Inferior_Float := []string{"#{{<b:True> < <n:4.4>: yes || no}}", "yes"}
-    bool_Inferior2_Float := []string{"#{{<b:False> < <n:4.6>: yes || no}}", "yes"}
-    bool_Inferior_Bool := []string{"#{{<b:True> < <b:True>: yes || no}}", "no"}
-    bool_Inferior2_Bool := []string{"#{{<b:False> < <b:False>: yes || no}}", "no"}
+    bool_Inferior_Str := []string{"#{{b/True < 'text'; yes | no}}", "yes"}
+    bool_Inferior2_Str := []string{"#{{b/False < 'texte'; yes | no}}", "yes"}
+    bool_Inferior_Int := []string{"#{{b/True < i/4; yes | no}}", "yes"}
+    bool_Inferior2_Int := []string{"#{{b/False < i/5; yes | no}}", "yes"}
+    bool_Inferior_Float := []string{"#{{b/True < f/4.5; yes | no}}", "yes"}
+    bool_Inferior2_Float := []string{"#{{b/False < f/4.6; yes | no}}", "yes"}
+    bool_Inferior_Bool := []string{"#{{b/True < b/True; yes | no}}", "no"}
+    bool_Inferior2_Bool := []string{"#{{b/False < b/False; yes | no}}", "no"}
 
     if text := parser.ParseCondition(bool_Inferior_Str[0]); text != bool_Inferior_Str[1] {
         t.Fatalf("bool_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Str[1] + Reset + "'")
@@ -788,8 +788,8 @@ func TestConditionInferior(t *testing.T) {
 
 func TestSwitch(t *testing.T) {
     
-    text_Switch_1 := []string{"?{{str; Jame=#0, Tony:=#1, Marco:=#2, default=#default}}", "#0"}
-    text_Switch_2 := []string{"?{{int:int; 56=#0, 36=#1, 32=#2, default=#default}}", "#2"}
+    text_Switch_1 := []string{"?{{str; Jame:#0, Tony:#1, Marco:#2, _:#default}}", "#0"}
+    text_Switch_2 := []string{"?{{int/int; 56:#0, 36:#1, 32:#2, _:#default}}", "#2"}
 
     parser := tem.New(arrayFunc, varMap)
 
@@ -804,8 +804,8 @@ func TestSwitch(t *testing.T) {
 
 func TestHasOne(t *testing.T) {
     
-    text_Has_One_1 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", true}
-    text_Has_One_2 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ${{bool}}", true}
+    text_Has_One_1 := []Any{"?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}} and ?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}}", true}
+    text_Has_One_2 := []Any{"?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}} and ${{bool}}", true}
     text_Has_One_3 := []Any{"@{{uppercase ${{var}}}} and ${{name}}", true}
     text_Has_One_4 := []Any{"text", false}
     text_Has_One_5 := []Any{"%{{bool}}", false}
@@ -856,9 +856,9 @@ func TestHasVariable(t *testing.T) {
 
 func TestHasFunction(t *testing.T) {
     
-    text_Has_Function_1 := []Any{"@{{uppercase lower}} and @{{uppercaseFirst lower}}", true}
-    text_Has_Function_2 := []Any{"@{{uppercase lower}} and #{{'text' > 'text': yes || no}}", true}
-    text_Has_Function_3 := []Any{"#{{'text' > 'text': yes || no}} and #{{'text' < 'text': yes || no}}", false}
+    text_Has_Function_1 := []Any{"@{{uppercase; lower}} and @{{uppercaseFirst; lower}}", true}
+    text_Has_Function_2 := []Any{"@{{uppercase; lower}} and #{{'text' > 'text'; yes | no}}", true}
+    text_Has_Function_3 := []Any{"#{{'text' > 'text'; yes | no}} and #{{'text' < 'text'; yes | no}}", false}
     
     parser := tem.New(FuncArray{}, VarMap{})
     
@@ -877,9 +877,9 @@ func TestHasFunction(t *testing.T) {
 
 func TestHasCondition(t *testing.T) {
     
-    text_Has_Condition_1 := []Any{"#{{'text' > 'text': yes || no}} and #{{'text' < 'text': yes || no}}", true}
-    text_Has_Condition_2 := []Any{"#{{'text' > 'text': yes || no}} and ?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", true}
-    text_Has_Condition_3 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", false}
+    text_Has_Condition_1 := []Any{"#{{'text' > 'text'; yes | no}} and #{{'text' < 'text'; yes | no}}", true}
+    text_Has_Condition_2 := []Any{"#{{'text' > 'text'; yes | no}} and ?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}}", true}
+    text_Has_Condition_3 := []Any{"?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}} and ?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}}", false}
     
     parser := tem.New(FuncArray{}, VarMap{})
     
@@ -898,8 +898,8 @@ func TestHasCondition(t *testing.T) {
 
 func TestHasSwitch(t *testing.T) {
     
-    text_Has_Switch_1 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}}", true}
-    text_Has_Switch_2 := []Any{"?{{age:int; 56=#0, 36=#1, 32=#2, default=#default}} and ${{bool}}", true}
+    text_Has_Switch_1 := []Any{"?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}} and ?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}}", true}
+    text_Has_Switch_2 := []Any{"?{{age:int; 56:#0, 36:#1, 32:#2, _:#default}} and ${{bool}}", true}
     text_Has_Switch_3 := []Any{"${{bool}} and ${{name}}", false}
 
     parser := tem.New(FuncArray{}, VarMap{})
