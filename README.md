@@ -1,19 +1,19 @@
 
 <div align="center">
     <h1>TemplateStr-Go</h1>
-    <h3>TemplateStr allows to add variable, function, condition and switch in a string.</h3>
+    <h2>TemplateStr allows to add variable, function, condition and switch in a string.</h2>
     <img src="https://img.shields.io/static/v1?label=Go&message=1.11%5E&color=22CFFA&style=flat-square&logo=Go&logoColor=00ADD8"/>
     <a href="https://github.com/CheeseGrinder/TemplateStr-Go/actions/workflows/python-app.yml">
         <img src="https://img.shields.io/github/workflow/status/CheeseGrinder/TemplateStr-Go/Go Test?label=Test&style=flat-square"/>
     </a>
 </div>
 
-#### Install :
+### Install :
 ```
 go get -u github.com/CheeseGrinder/TemplateStr-Go/templateStr@latest
 ```
 
-#### Import :
+### Import :
 
 ```go
 import (
@@ -24,7 +24,7 @@ type VarMap = templateStr.VariableMap
 type FuncArray = templateStr.FuncArray
 ```
 
-#### Construtor :
+### Construtor :
 
 ```go
 parser := templateStr.New(funcArray, varMap)
@@ -41,6 +41,7 @@ var funcArray FuncArray = FuncArray{meCustomFunc, otherCustomFunc}
 
 </details>
 </li>
+
 <li>
 <details>
 <summary><code>varMap</code>: is a map of the Variables you want to pass to be called in your text</summary><br>
@@ -71,7 +72,7 @@ var varMap VarMap = VarMap{
 </li>
 </ul>
 
-#### Function :
+### Function :
 
 ```go
 parser.Parse(text)
@@ -88,66 +89,39 @@ parser.Parse(text)
 - `HasCondition(text: string) bool` : check if there are any Condition
 - `HasSwitch(text: string) bool` : check if there are any Switch
 
-#### Exemple Syntaxe :
+### Exemple Syntaxe :
 
+<ul>
+<li>
 <details>
 <summary><strong>Variable</strong></summary>
 </br>
 
-The syntax of the Variables is like if : 
+The syntax of the Variables is like if :
 - `${{variable}}`
 - `${{Map.value}}`
 - `${{MasterMap.SecondMap.value. ...}}`
 
 if the value does not exist then `None` is return
 
+<!-- V Be careful, it's not a "go" code, it's just to have some colour in the rendering -->
 ```go
-var varMap = VarMap{
-    "variable": "yes",
-}
+name = "Jame"
 
-text := "are you a variable : ${{variable}}"
-
-parser := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
-```
-
-```go
-var varMap = VarMap{
-    "variable": VarMap{
-        "value": "yes",
-    },
-}
-
-text := "are you a variable : ${{variable.value}}"
-
-parser := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
-```
-
-```go
-variable := "yes"
-
-println("are you a variable : " + variable)
-```
-
-The 3 codes will return
-
-```text
-are you a variable : yes
+"name is ${{name}}" => parse => "name is Jame"
 ```
 
 </details>
+</li>
 
+<li>
 <details>
 <summary><strong>Function</strong></summary>
 </br>
 
 The syntax of the Function is like if : `@{{function; parameter}}` or `@{{function}}`
 
-list of basic functions : 
+internal function list :
 
 - `@{{uppercase; variableName}}`
 - `@{{uppercaseFirst; variableName}}`
@@ -157,121 +131,71 @@ list of basic functions :
 - `@{{date}}`
 - `@{{dateTime}}`
 
+<!-- V Be careful, it's not a "go" code, it's just to have some colour in the rendering -->
 ```go
-var varMap = VarMap{
-    "variable": "no",
-}
+name = "jame"
 
-text := "is lower case : @{{uppercase; variable}}"
-
-parser := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
+"name is @{{uppercase; name}}" => parse => "name is JAME"
 ```
 
-```go
-variable := "no"
-
-println("is lower case : " + strings.ToUpper(variable))
-```
-
-The two codes will return
-
-```text
-is lower case : NO
-```
 </details>
+</li>
 
+<li>
 <details>
 <summary><strong>Custom Function</strong></summary>
 </br>
 
-The syntax of the Custom Function is like if : `@{{customFunction; param1 param2 ...}}`
+The syntax of the Custom Function is like if : `@{{customFunction; param1 param2 ...}}` or `@{{customFunction}}`
 
-`Typing` can be used at the parameter level of custom functions
+`Syntaxe Typing` can be used at the parameter level of custom functions
 
-parameters to be passed in a list
-
-the custom function must necessarily return a str
-
-```go
-func customFunc(list []Any) string{
-    return strings.Replace(list[0], "no", "maybe", -1)
-}
-
-text := "are you a customFunction : @{{customFunc; 'no'}}"
-
-parser := templateStr.New(FuncArray{customFunc}, varMap)
-
-println(parser.Parse(text))
-```
-The codes will return
-
-```text
-are you a customFunction : maybe
-```
+For developers :
+- Parameters to be passed in a `list/vec/array`
+- The custom function must necessarily return a `str/string`
 
 </details>
+</li>
 
+<li>
 <details>
 <summary><strong>Condition</strong></summary>
 </br>
 
-The syntax of the Condition is like if : 
+The syntax of the Condition is like if :
 - `#{{value1 == value2; trueValue | falseValue}}`
 
 comparator:
 - `==`
 - `!=`
-- `<=`*
-- `<`*
-- `>=`*
-- `>`*
+- `<=` *
+- `<` *
+- `>=` *
+- `>` *
 
-*for this comparator the type `string` and `bool` are modified :
+<details>
+<summary>* for this comparator the type <code>string</code> and <code>bool</code> are modified :</summary>
+
 - `string` it's the number of characters that is compared ('text' = 4)
 - `bool` it's the value in int that is compared (True = 1)
 
+</details></br>
 
 `value1` is compared with `value2`
 
-`Typing` can be used at `value1` and `value2` level
+`Syntaxe Typing` can be used at `value1` and `value2` level
 
+<!-- V Be careful, it's not a "go" code, it's just to have some colour in the rendering -->
 ```go
-var varMap = VarMap{
-    "var1": "no",
-    "var2": "o2",
-}
+name = "Jame"
 
-text := "are you a variable : #{{'test' == var2: yes || no}}"
-
-parse := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
-```
-```go
-var1 := "no"
-var2 := "o2"
-
-var text string
-
-if "test" == var2 {
-    text = "yes"
-} else {
-    text = "no"
-}
-
-println(text)
-```
-
-The 2 codes will return
-
-```text
-are you a variable : no
+"Jame is equal to James ? #{{name == 'James'; Yes | No}}" => parse => "Jame is equal to James ? No"
 ```
 
 </details>
+</li>
 
+<li>
 <details>
 <summary><strong>Switch</strong></summary>
 </br>
@@ -280,70 +204,39 @@ The syntax of the Switch is like if :
 - `?{{variableName; value1:#0F0, value2:#00F, ..., _:#000}}`
 - `?{{type/variableName; value1:#0F0, value2:#00F, ..., _:#000}}`
 
-`var` can be typed, if it is typed then all the `values` will be typed of the same type
+The value of `variableName` is compared with all the `values*`,
+if a `values*` is equal to the value of `variableName` then the value after the ":" will be returned
 
-type :
+you can specify the type of `variableName`, but don't use `Syntaxe Typing`.
+If the type is specified then all `values*` will be typed with the same type.
+
+syntaxe for specify type `variableName` :
 - `str`
 - `int`
 - `float`
 
+<!-- V Be careful, it's not a "go" code, it's just to have some colour in the rendering -->
 ```go
-var varMap = VarMap{
-    "variable": "yes",
-}
+name = "Jame"
+yearsOld = 36
 
-text := "=( ?{{variable; yes:#A, no:#B, maybe:#C, _:#000}} )="
-
-parse := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
-```
-```go
-var varMap = VarMap{
-    "variable": 42,
-}
-
-text := "=( ?{{int/variable; 42:#A, 32:#B, 22:#C, _:#000}} )="
-
-parse := templateStr.New(FuncArray{}, varMap)
-
-println(parser.Parse(text))
-```
-```go
-var result string
-variable := "yes"
-
-switch variable {
-case "yes":
-    result = "#A"
-case "no":
-    result = "#B"
-case "maybe":
-    result = "#C"
-default:
-    result = "#000"
-}
-
-println(result)
-```
-
-The 3 codes will return
-
-```text
-=( #A )=
+"how old is Jame ? ?{{name; Jame:42 years old, William:36 years old, _:I don't know}}" => parse => "how old is Jame ? 42 years old"
+"who at 36 years old ? ?{{int/yearsOld; 42:Jame !, 36:William !, _:I don't know}}" => parse => "who at 42 years old ? William !"
 ```
 
 </details>
+</li>
+</ul>
 
-#### Typing :
+### Syntaxe Typing :
 
-| format                       | type    | description                                                       | return                 |
-|------------------------------|---------|-------------------------------------------------------------------|------------------------|
-| variableName                 | `*`     | is the key of the value in the dictionary pass to the constructor | value of `variableName`|
-| b/True                       | `bool`  |                                                                   | True                   |
-| i/123                        | `int`   |                                                                   | 123                    |
-| f/123.4                      | `float` |                                                                   | 123.4                  |
-| "text" or 'text' or \`text\` | `str`   |                                                                   | text                   |
+| Format                       | Type    | Description                                                             | Return                 |
+|------------------------------|---------|-------------------------------------------------------------------------|------------------------|
+| variableName                 | `*`     | Is the key of the value in the dictionary pass to the constructor       | value of `variableName`|
+| b/True                       | `bool`  | Type the string True as `bool`                                          | True                   |
+| i/123                        | `int`   | Type the string 123 as type `int`                                       | 123                    |
+| f/123.4                      | `float` | Type the string 123.4 as type `float`                                   | 123.4                  |
+| "text" or 'text' or \`text\` | `str`   | It just takes what's in quote, not to be interpreted as a variable name | text                   |
 
 ### TODO
 
