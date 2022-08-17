@@ -9,9 +9,7 @@ import (
     "strconv"
     "strings"
     "time"
-
     "unicode"
-
     // "golang.org/x/text/cases"
 )
 
@@ -20,11 +18,11 @@ type VariableMap map[string]Any
 type Func func([]Any) string
 type FuncArray []Func
 
-var regVariable = regex.MustCompile(`(?P<match>\${{(?P<key>[\w._-]+)}})`)
-var regFunction = regex.MustCompile(`(?P<match>@{{(?P<functionName>[^{@}\s]+)(?:; (?P<parameters>[^{@}]+))?}})`)
-var regCondition = regex.MustCompile(`(?P<match>#{{(?P<conditionValue1>[^{#}]+) (?P<conditionSymbol>==|!=|<=|<|>=|>) (?P<conditionValue2>[^{#}]+); (?P<trueValue>[^{}]+) \| (?P<falseValue>[^{}]+)}})`)
-var regSwitch = regex.MustCompile(`(?P<match>\?{{(?:(?P<key>[^{?}/]+)|(?P<type>str|int|float)/(?P<tKey>[^{?}]+)); (?P<values>(?:[^{}]+):(?:[^{}]+)), _:(?P<defaultValue>[^{}]+)}})`)
-var regTyping = regex.MustCompile(`\"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|b/(?P<bool>[Tt]rue|[Ff]alse)|i/(?P<int>[0-9_]+)|f/(?P<float>[0-9_.]+)|(?P<variable>[^<>\" ]+)`)
+var regVariable = regex.MustCompile(REG_VARIABLE)
+var regFunction = regex.MustCompile(REG_FUNCTION)
+var regCondition = regex.MustCompile(REG_CONDITION)
+var regSwitch = regex.MustCompile(REG_SWITCH)
+var regTyping = regex.MustCompile(REG_STR + `|` + REG_BOOL + `|` + REG_INT + `|` + REG_FLOAT + `|` + REG_VAR + `|` + REG_LIST)
 
 // Construtor
 type TemplateStr struct {
@@ -57,7 +55,7 @@ func getNameFunc(function Func) string {
     return spli[len(spli)-1]
 }
 
-func getVariable(key string, varMap VariableMap, ) (Any, bool) {
+func getVariable(key string, varMap VariableMap, index ...int) (Any, bool) {
 
     var fvalue Any
     var ok bool
@@ -77,12 +75,23 @@ func getVariable(key string, varMap VariableMap, ) (Any, bool) {
             } else {
                 tempMap, ok = tempMap[keyMap].(VariableMap)
             }
+            if !ok { panic("[key '["+ key +"]' not exist]") }
         }
     } else {
         fvalue, ok = varMap[key]
+        if !ok { panic("[key '["+ key +"]' not exist]") }
     }
 
-    if fvalue == nil { fvalue = "None" }
+    if fvalue == nil { return "none", false }
+    if lenIndex := len(index); lenIndex != 0 && (reflect.TypeOf(fvalue).Kind() == reflect.Slice || reflect.TypeOf(fvalue).Kind() == reflect.Array) {
+            if lenfvalue := len(fvalue.([]Any)); !(lenfvalue <= index[0]) {
+                fvalue = fvalue.([]Any)[index[0]]
+            } else {
+                panic("[index '["+ fmt.Sprint(index[0]) +"]' out of range]")
+            }
+    } else if lenIndex != 0 {
+        panic("[key '["+ key +"]' is not array]")
+    }
 
     return fvalue, ok
 }
@@ -173,11 +182,11 @@ func convertInterfaceToFloat(value1 Any, value2 Any) (value1F, value2F float64) 
     return
 }
 
-func typing(str string, varMap VariableMap, typing ...string) []Any {
+func typing(str string, varMap VariableMap, types ...string) []Any {
 
     arrayTyping := []Any{}
 
-    if len(typing) == 0 {
+    if len(types) == 0 {
         for _, groupParam := range findAllGroup(regTyping, str) {
             
             if groupParam["str_double"] != "" { 
@@ -196,19 +205,27 @@ func typing(str string, varMap VariableMap, typing ...string) []Any {
                 float, _ := strconv.ParseFloat(groupParam["float"], 64)
                 arrayTyping = append(arrayTyping, float)
             } else if groupParam["variable"] != "" {
-                value, _ := getVariable(groupParam["variable"], varMap)
-                arrayTyping = append(arrayTyping, fmt.Sprintf("%v", value))
+                if groupParam["index"] == "" {
+                    value, _ := getVariable(groupParam["variable"], varMap)
+                    arrayTyping = append(arrayTyping, value)
+                } else {
+                    i, _ := strconv.Atoi(groupParam["index"])
+                    value, _ := getVariable(groupParam["variable"], varMap, i)
+                    arrayTyping = append(arrayTyping, value)
+                }
+            } else if l := groupParam["list"]; l != "" {
+                arrayTyping = append(arrayTyping, typing(l, varMap))
             }
         }
-    } else if typing[0] == "int" {
+    } else if types[0] == "int" {
         int, _ := strconv.Atoi(str)
         arrayTyping = append(arrayTyping, int)
-    } else if typing[0] == "float" {
+    } else if types[0] == "float" {
         float, _ := strconv.ParseFloat(str, 64)
         arrayTyping = append(arrayTyping, float)
-    } else if typing[0] == "str" {
+    } else if types[0] == "str" {
         arrayTyping = append(arrayTyping, str)
-    } else if typing[0] == "bool" {
+    } else if types[0] == "bool" {
         bool, _ := strconv.ParseBool(str)
         arrayTyping = append(arrayTyping, bool)
     }
@@ -244,7 +261,7 @@ func (t TemplateStr) Parse(text string) string {
     return text
 }
 
-// parse all the `{{$variable}}` in the text give in
+// parse all the `${variable}` in the text give in
 //
 // return -> string
 func (t TemplateStr) ParseVariable(text string) string {
@@ -254,7 +271,19 @@ func (t TemplateStr) ParseVariable(text string) string {
     for t.HasVariable(text) {
         for _, v := range findAllGroup(regVariable, text) {
 
-            value, _ := getVariable(v["key"], t.variableMap)
+            variable := v["variable"]
+            var value Any
+
+            if index := v["index"]; index == "" {
+
+                value, _ = getVariable(variable, t.variableMap)
+            } else {
+
+                index, _ := strconv.Atoi(index)
+                value, _ = getVariable(variable, t.variableMap, index)
+
+            }
+
     
             key := fmt.Sprintf("%v", value)
             match := v["match"]
@@ -281,22 +310,25 @@ func (t TemplateStr) ParseFunction(text string) string {
     
             match := group["match"]
             parameters := group["parameters"]
-            
-            var value string = "None"
+
+            // var value string = "None"
             dateTime := time.Now()
-    
-            if v, ok := getVariable(parameters, t.variableMap); ok && fmt.Sprintf("%v", v) != ""{
-                value = fmt.Sprintf("%v", v)
+            
+            value := func(par string) string {
+                    if v, ok := getVariable(par, t.variableMap); ok && fmt.Sprint(v) != ""{
+                        return fmt.Sprint(v)
+                    }
+                return "none"
             }
 
             functionName := group["functionName"]
     
             switch functionName {
-            case "uppercase": text = strings.Replace(text, match, strings.ToUpper(value), -1)
-            case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(value), -1)
-            case "lowercase": text = strings.Replace(text, match, strings.ToLower(value), -1)
+            case "uppercase": text = strings.Replace(text, match, strings.ToUpper(value(parameters)), -1)
+            case "uppercaseFirst": text = strings.Replace(text, match, upperCaseFirst(value(parameters)), -1)
+            case "lowercase": text = strings.Replace(text, match, strings.ToLower(value(parameters)), -1)
             // case "casefold": text = strings.Replace(text, match, c.String(key), -1)
-            case "swapcase": text = strings.Replace(text, match, swapCase(value), -1)
+            case "swapcase": text = strings.Replace(text, match, swapCase(value(parameters)), -1)
             case "time": text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
             case "date": text = strings.Replace(text, match, dateTime.Format("02/01/2006"), -1)
             case "dateTime": text = strings.Replace(text, match, dateTime.Format("02/01/2006 15:04:05"), -1)
@@ -383,13 +415,13 @@ func (t TemplateStr) ParseSwitch(text string) string {
             var result string
     
             for _, n := range strings.Split(group["values"], ", ") {
-                keyValue := strings.Split(n, ":")
+                keyValue := strings.Split(n, "::")
                 mapTemp[keyValue[0]] = keyValue[1]
             }
     
-            if group["key"] != "" {
+            if group["type"] == "" {
                 for key, value := range mapTemp {
-                    if key == t.variableMap[group["key"]] {
+                    if key == t.variableMap[group["variable"]] {
                         result = value
                         break
                     } else {
@@ -397,8 +429,8 @@ func (t TemplateStr) ParseSwitch(text string) string {
                     }
                 }
     
-            } else if group["tKey"] != ""{
-                keyVar := group["tKey"]
+            } else {
+                keyVar := group["variable"]
                 typeVar := group["type"]
                 
                 for key, value := range mapTemp {
@@ -411,7 +443,6 @@ func (t TemplateStr) ParseSwitch(text string) string {
                     }
                 }
             }
-    
             text = strings.Replace(text, match, result, -1)
         }
     }

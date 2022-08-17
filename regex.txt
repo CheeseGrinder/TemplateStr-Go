@@ -11,4 +11,4 @@ Switch : ?{test; test::ok, test2::ko, _::default} ?{int/test; test::ok, test2::n
     reg : (?P<match>\?{(?:(?P<type>str|int|float)/)?(?P<variable>[\w._-]+)(?:\[(?P<index>[\d]+)])?; (?P<values>(?:[^{}]+::[^{}]+){2,}), _::(?P<defaultValue>[^{}]+)})
 
 Typing : variable test[1456] "test" 'test' `test` b/true b/false i/123_123 f/123_132.156_32 (list,test)
-    reg : \"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|b/(?P<bool>[Tt]rue|[Ff]alse)|i/(?P<int>[0-9_]+)|f/(?P<float>[0-9_.]+)|(?P<variable>[^<>\" ]+)
+    reg : \"(?P<str_double>[^\"]+)\"|\'(?P<str_single>[^\']+)\'|\x60(?P<str_back>[^\x60]+)\x60|b/(?P<bool>[Tt]rue|[Ff]alse)|i/(?P<int>[0-9_]+)|f/(?P<float>[0-9_.]+)|(?P<variable>[\w._-]+)(?:\[(?P<index>[\d]+)])?|\((?P<list>[^\(\)]+)\)
