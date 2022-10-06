@@ -4,7 +4,7 @@
     <h2>TemplateStr allows to add variable, function, condition and switch in a string.</h2>
     <img src="https://img.shields.io/static/v1?label=Go&message=1.11%5E&color=22CFFA&style=flat-square&logo=Go&logoColor=00ADD8"/>
     <a href="https://github.com/CheeseGrinder/TemplateStr-Go/actions/workflows/python-app.yml">
-        <img src="https://img.shields.io/github/workflow/status/CheeseGrinder/TemplateStr-Go/Go Test?label=Test&style=flat-square"/>
+        <img src="https://img.shields.io/github/actions/workflow/status/CheeseGrinder/TemplateStr-Go/go_test.yml?label=Test&style=flat-square"/>
     </a>
 </div>
 
