@@ -170,19 +170,6 @@ var varMap VarMap = VarMap{
 	},
 }
 
-func test_panic(f func(text string) string, arg ...string) (p string) {
-
-	defer func() {
-		if r := recover(); r != nil {
-			p = fmt.Sprint(r)
-		}
-	}()
-
-	f(arg[0])
-
-	return "no panic"
-}
-
 func TestAll(t *testing.T) {
 
 	testAll_1 := []string{
@@ -195,35 +182,37 @@ func TestAll(t *testing.T) {
 	testAll_4 := []string{"test switch in switch ?{str; Jame::?{Build; Succes::#0, Failed::#1, _::#default}, Tony::#1, Marco::#2, _::#default}", "test switch in switch #0"}
 	testAll_5 := []string{"test wtf ?{str; Jame::?{int/${var}; 32::#0, 36::#1, _::#default}, Tony::#1, Marco::#2, _::#default2}", "test wtf #0"}
 
-	// panic case
-	testAll_panic_1 := []string{"test func in func @{lowercase; @{uppercase; str}}", "[key '[JAME]' not exist]"}
+	// Error case
+	testAll_error_1 := []string{"test func in func @{lowercase; @{uppercase; str}}", "NotFoundVariableError: [key '[JAME]' not exist]"}
 
 	parser := tem.New(arrayFunc, varMap)
 
-	if text := parser.Parse(testAll_1[0]); text != testAll_1[1] {
+	if text, _ := parser.Parse(testAll_1[0]); text != testAll_1[1] {
 		t.Fatalf("testAll_1 : '" + Red + text + Reset + "' != '" + Yellow + testAll_1[1] + Reset + "'")
 	}
 
-	if text := parser.Parse(testAll_2[0]); text != testAll_2[1] {
+	if text, _ := parser.Parse(testAll_2[0]); text != testAll_2[1] {
 		t.Fatalf("testAll_2 : '" + Red + text + Reset + "' != '" + Yellow + testAll_2[1] + Reset + "'")
 	}
 
-	if text := parser.Parse(testAll_3[0]); text != testAll_3[1] {
+	if text, _ := parser.Parse(testAll_3[0]); text != testAll_3[1] {
 		t.Fatalf("testAll_3 : '" + Red + text + Reset + "' != '" + Yellow + testAll_3[1] + Reset + "'")
 	}
 
-	if text := parser.Parse(testAll_4[0]); text != testAll_4[1] {
+	if text, _ := parser.Parse(testAll_4[0]); text != testAll_4[1] {
 		t.Fatalf("testAll_4 : '" + Red + text + Reset + "' != '" + Yellow + testAll_4[1] + Reset + "'")
 	}
 
-	if text := parser.Parse(testAll_5[0]); text != testAll_5[1] {
+	if text, _ := parser.Parse(testAll_5[0]); text != testAll_5[1] {
 		t.Fatalf("testAll_5 : '" + Red + text + Reset + "' != '" + Yellow + testAll_5[1] + Reset + "'")
 	}
 
-	// panic case
+	// Error case
 
-	if panicF := test_panic(parser.Parse, testAll_panic_1[0]); panicF != testAll_panic_1[1] {
-		t.Fatalf("testAll_panic_1 : '" + Red + panicF + Reset + "' != '" + Yellow + testAll_panic_1[1] + Reset + "'")
+	print("error")
+
+	if _, err := parser.Parse(testAll_error_1[0]); fmt.Sprint(err) != testAll_error_1[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + testAll_error_1[1] + Reset + "'")
 	}
 }
 
@@ -232,39 +221,44 @@ func TestVariable(t *testing.T) {
 	text_1 := []string{"var bool = ${bool} and name = ${str}", "var bool = true and name = Jame"}
 	text_2 := []string{"${Map.value}", "Map in Map"}
 	text_3 := []string{"${MasterMap.SecondMap.value}", "Map in Map in Map"}
+	text_4 := []string{"${array[0]}", "test"}
 
-	// panic case
-	text_panic_1 := []string{"${word}", "[key '[word]' not exist]"}
-	text_panic_2 := []string{"${dict.dict1.value}", "[key '[dict.dict1.value]' not exist]"}
-	text_panic_3 := []string{"${Build[0]}", "[key '[Build]' is not array]"}
-	text_panic_4 := []string{"${array[2]}", "[index '[2]' out of range]"}
+	// Error case
+	text_error_1 := []string{"${word}", "NotFoundVariableError: [key '[word]' not exist]"}
+	text_error_2 := []string{"${dict.dict1.value}", "NotFoundVariableError: [key '[dict.dict1.value]' not exist]"}
+	text_error_3 := []string{"${Build[0]}", "NotAArrayError: [key '[Build]' is not array]"}
+	text_error_4 := []string{"${array[2]}", "IndexError: [index '[2]' out of range]"}
 
 	parser := tem.New(FuncArray{}, varMap)
 
-	if text := parser.ParseVariable(text_1[0]); text != text_1[1] {
+	if text, _ := parser.ParseVariable(text_1[0]); text != text_1[1] {
 		t.Fatalf("text_1 : '" + Red + text + Reset + "' != '" + Yellow + text_1[1] + Reset + "'")
 	}
-	if text := parser.ParseVariable(text_2[0]); text != text_2[1] {
+	if text, _ := parser.ParseVariable(text_2[0]); text != text_2[1] {
 		t.Fatalf("text_2 : '" + Red + text + Reset + "' != '" + Yellow + text_2[1] + Reset + "'")
 	}
-	if text := parser.ParseVariable(text_3[0]); text != text_3[1] {
+	if text, _ := parser.ParseVariable(text_3[0]); text != text_3[1] {
 		t.Fatalf("text_3 : '" + Red + text + Reset + "' != '" + Yellow + text_3[1] + Reset + "'")
 	}
+	if text, _ := parser.ParseVariable(text_4[0]); text != text_4[1] {
+		t.Fatalf("text_4 : '" + Red + text + Reset + "' != '" + Yellow + text_4[1] + Reset + "'")
+	}
 
-	// panic case
-	if panicF := test_panic(parser.ParseVariable, text_panic_1[0]); panicF != text_panic_1[1] {
-		t.Fatalf("text_panic_1 : '" + Red + panicF + Reset + "' != '" + Yellow + text_panic_1[1] + Reset + "'")
+	// Error case
+	if _, err := parser.Parse(text_error_1[0]); fmt.Sprint(err) != text_error_1[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + text_error_1[1] + Reset + "'")
 	}
-	if panicF := test_panic(parser.ParseVariable, text_panic_2[0]); panicF != text_panic_2[1] {
-		t.Fatalf("text_panic_2 : '" + Red + panicF + Reset + "' != '" + Yellow + text_panic_2[1] + Reset + "'")
+	if _, err := parser.Parse(text_error_2[0]); fmt.Sprint(err) != text_error_2[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + text_error_2[1] + Reset + "'")
 	}
-	if panicF := test_panic(parser.ParseVariable, text_panic_3[0]); panicF != text_panic_3[1] {
-		t.Fatalf("text_panic_3 : '" + Red + panicF + Reset + "' != '" + Yellow + text_panic_3[1] + Reset + "'")
+	if _, err := parser.Parse(text_error_3[0]); fmt.Sprint(err) != text_error_3[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + text_error_3[1] + Reset + "'")
 	}
-	if panicF := test_panic(parser.ParseVariable, text_panic_4[0]); panicF != text_panic_4[1] {
-		t.Fatalf("text_panic_4 : '" + Red + panicF + Reset + "' != '" + Yellow + text_panic_4[1] + Reset + "'")
+	if _, err := parser.Parse(text_error_4[0]); fmt.Sprint(err) != text_error_4[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + text_error_4[1] + Reset + "'")
 	}
 }
+
 func TestInternFunction(t *testing.T) {
 
 	uppercase := []string{"@{uppercase; lower}", "AZERTY"}
@@ -276,40 +270,40 @@ func TestInternFunction(t *testing.T) {
 	date := "@{date}"
 	dateTime := "@{dateTime}"
 
-	// panic case
-	uppercase_panic := []string{"@{uppercase; test}", "[key '[test]' not exist]"}
+	// Error case
+	uppercase_error := []string{"@{uppercase; test}", "NotFoundVariableError: [key '[test]' not exist]"}
 
 	parser := tem.New(FuncArray{}, varMap)
 
-	if text := parser.ParseFunction(uppercase[0]); text != uppercase[1] {
+	if text, _ := parser.ParseFunction(uppercase[0]); text != uppercase[1] {
 		t.Fatalf("uppercase : '" + Red + text + Reset + "' != '" + Yellow + uppercase[1] + Reset + "'")
 	}
-	if text := parser.ParseFunction(uppercaseFirst[0]); text != uppercaseFirst[1] {
+	if text, _ := parser.ParseFunction(uppercaseFirst[0]); text != uppercaseFirst[1] {
 		t.Fatalf("uppercaseFirst : '" + Red + text + Reset + "' != '" + Yellow + uppercaseFirst[1] + Reset + "'")
 	}
-	if text := parser.ParseFunction(lowercase[0]); text != lowercase[1] {
+	if text, _ := parser.ParseFunction(lowercase[0]); text != lowercase[1] {
 		t.Fatalf("lowercase : '" + Red + text + Reset + "' != '" + Yellow + lowercase[1] + Reset + "'")
 	}
-	// if text := parser.ParseFunction(casefold[0]); text != casefold[1] {t.Fatalf("casefold : '" + Red + text + Reset + "' != '" + Yellow + casefold[1] + Reset + "'")}
-	if text := parser.ParseFunction(swapcase[0]); text != swapcase[1] {
+	// if text, _ := parser.ParseFunction(casefold[0]); text != casefold[1] {t.Fatalf("casefold : '" + Red + text + Reset + "' != '" + Yellow + casefold[1] + Reset + "'")}
+	if text, _ := parser.ParseFunction(swapcase[0]); text != swapcase[1] {
 		t.Fatalf("swapcase : '" + Red + text + Reset + "' != '" + Yellow + swapcase[1] + Reset + "'")
 	}
 
 	dateTime1 := ti.Now()
-	if text := parser.ParseFunction(time); text != dateTime1.Format("15:04:05") {
+	if text, _ := parser.ParseFunction(time); text != dateTime1.Format("15:04:05") {
 		t.Fatalf("time : '" + Red + text + Reset + "' != '" + Yellow + dateTime1.Format("15:04:05") + Reset + "'")
 	}
-	if text := parser.ParseFunction(date); text != dateTime1.Format("02/01/2006") {
+	if text, _ := parser.ParseFunction(date); text != dateTime1.Format("02/01/2006") {
 		t.Fatalf("date : '" + Red + text + Reset + "' != '" + Yellow + dateTime1.Format("02/01/2006") + Reset + "'")
 	}
 	dateTime2 := ti.Now()
-	if text := parser.ParseFunction(dateTime); text != dateTime2.Format("02/01/2006 15:04:05") {
+	if text, _ := parser.ParseFunction(dateTime); text != dateTime2.Format("02/01/2006 15:04:05") {
 		t.Fatalf("dateTime : '" + Red + text + Reset + "' != '" + Yellow + dateTime2.Format("02/01/2006 15:04:05") + Reset + "'")
 	}
 
-	// panic case
-	if panicF := test_panic(parser.ParseFunction, uppercase_panic[0]); panicF != uppercase_panic[1] {
-		t.Fatalf("uppercase_panic : '" + Red + panicF + Reset + "' != '" + Yellow + uppercase_panic[1] + Reset + "'")
+	// Error case
+	if _, err := parser.Parse(uppercase_error[0]); fmt.Sprint(err) != uppercase_error[1] {
+		t.Fatalf("testAll_panic_1 : '" + Red + fmt.Sprint(err) + Reset + "' != '" + Yellow + uppercase_error[1] + Reset + "'")
 	}
 }
 
@@ -320,10 +314,10 @@ func TestCustomFunction(t *testing.T) {
 
 	parser := tem.New(arrayFunc, varMap)
 
-	if text := parser.ParseFunction(test[0]); text != test[1] {
+	if text, _ := parser.ParseFunction(test[0]); text != test[1] {
 		t.Fatalf("'" + Red + text + Reset + "' != '" + Yellow + test[1] + Reset + "'")
 	}
-	if text := parser.ParseFunction(testType[0]); text != testType[1] {
+	if text, _ := parser.ParseFunction(testType[0]); text != testType[1] {
 		t.Fatalf("'" + Red + text + Reset + "' != '" + Yellow + testType[1] + Reset + "'")
 	}
 }
@@ -338,19 +332,19 @@ func TestConditionEqual(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, varMap)
 
-	if text := parser.ParseCondition(str_Equal_Str[0]); text != str_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(str_Equal_Str[0]); text != str_Equal_Str[1] {
 		t.Fatalf("str_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Equal2_Str[0]); text != str_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Equal2_Str[0]); text != str_Equal2_Str[1] {
 		t.Fatalf("str_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Equal_Str[0]); text != int_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(int_Equal_Str[0]); text != int_Equal_Str[1] {
 		t.Fatalf("int_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Equal_Str[0]); text != float_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(float_Equal_Str[0]); text != float_Equal_Str[1] {
 		t.Fatalf("float_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Equal_Str[0]); text != bool_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Equal_Str[0]); text != bool_Equal_Str[1] {
 		t.Fatalf("bool_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Equal_Str[1] + Reset + "'")
 	}
 }
@@ -365,19 +359,19 @@ func TestConditionNotEqual(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, varMap)
 
-	if text := parser.ParseCondition(str_Not_Equal_Str[0]); text != str_Not_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(str_Not_Equal_Str[0]); text != str_Not_Equal_Str[1] {
 		t.Fatalf("str_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Not_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Not_Equal2_Str[0]); text != str_Not_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Not_Equal2_Str[0]); text != str_Not_Equal2_Str[1] {
 		t.Fatalf("str_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Not_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Not_Equal_Str[0]); text != int_Not_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(int_Not_Equal_Str[0]); text != int_Not_Equal_Str[1] {
 		t.Fatalf("int_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Not_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Not_Equal_Str[0]); text != float_Not_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(float_Not_Equal_Str[0]); text != float_Not_Equal_Str[1] {
 		t.Fatalf("float_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Not_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Not_Equal_Str[0]); text != bool_Not_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Not_Equal_Str[0]); text != bool_Not_Equal_Str[1] {
 		t.Fatalf("bool_Not_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Not_Equal_Str[1] + Reset + "'")
 	}
 }
@@ -396,28 +390,28 @@ func TestConditionSuperiorEqual(t *testing.T) {
 	str_Superior_Equal_Bool := []string{"#{'text' >= b/True; yes | no}", "yes"}
 	str_Superior_Equal2_Bool := []string{"#{'text' >= b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(str_Superior_Equal_Str[0]); text != str_Superior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal_Str[0]); text != str_Superior_Equal_Str[1] {
 		t.Fatalf("str_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal2_Str[0]); text != str_Superior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal2_Str[0]); text != str_Superior_Equal2_Str[1] {
 		t.Fatalf("str_Superior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal_Int[0]); text != str_Superior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal_Int[0]); text != str_Superior_Equal_Int[1] {
 		t.Fatalf("str_Superior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal2_Int[0]); text != str_Superior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal2_Int[0]); text != str_Superior_Equal2_Int[1] {
 		t.Fatalf("str_Superior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal_Float[0]); text != str_Superior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal_Float[0]); text != str_Superior_Equal_Float[1] {
 		t.Fatalf("str_Superior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal2_Float[0]); text != str_Superior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal2_Float[0]); text != str_Superior_Equal2_Float[1] {
 		t.Fatalf("str_Superior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal_Bool[0]); text != str_Superior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal_Bool[0]); text != str_Superior_Equal_Bool[1] {
 		t.Fatalf("str_Superior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Equal2_Bool[0]); text != str_Superior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Equal2_Bool[0]); text != str_Superior_Equal2_Bool[1] {
 		t.Fatalf("str_Superior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -431,28 +425,28 @@ func TestConditionSuperiorEqual(t *testing.T) {
 	int_Superior_Equal_Bool := []string{"#{i/4 >= b/True; yes | no}", "yes"}
 	int_Superior_Equal2_Bool := []string{"#{i/4 >= b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(int_Superior_Equal_Str[0]); text != int_Superior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal_Str[0]); text != int_Superior_Equal_Str[1] {
 		t.Fatalf("int_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal2_Str[0]); text != int_Superior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal2_Str[0]); text != int_Superior_Equal2_Str[1] {
 		t.Fatalf("int_Superior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal_Int[0]); text != int_Superior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal_Int[0]); text != int_Superior_Equal_Int[1] {
 		t.Fatalf("int_Superior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal2_Int[0]); text != int_Superior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal2_Int[0]); text != int_Superior_Equal2_Int[1] {
 		t.Fatalf("int_Superior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal_Float[0]); text != int_Superior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal_Float[0]); text != int_Superior_Equal_Float[1] {
 		t.Fatalf("int_Superior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal2_Float[0]); text != int_Superior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal2_Float[0]); text != int_Superior_Equal2_Float[1] {
 		t.Fatalf("int_Superior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal_Bool[0]); text != int_Superior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal_Bool[0]); text != int_Superior_Equal_Bool[1] {
 		t.Fatalf("int_Superior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Equal2_Bool[0]); text != int_Superior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Equal2_Bool[0]); text != int_Superior_Equal2_Bool[1] {
 		t.Fatalf("int_Superior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -466,28 +460,28 @@ func TestConditionSuperiorEqual(t *testing.T) {
 	float_Superior_Equal_Bool := []string{"#{f/4.5 >= b/True; yes | no}", "yes"}
 	float_Superior_Equal2_Bool := []string{"#{f/4.5 >= b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(float_Superior_Equal_Str[0]); text != float_Superior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal_Str[0]); text != float_Superior_Equal_Str[1] {
 		t.Fatalf("float_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal2_Str[0]); text != float_Superior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal2_Str[0]); text != float_Superior_Equal2_Str[1] {
 		t.Fatalf("float_Superior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal_Int[0]); text != float_Superior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal_Int[0]); text != float_Superior_Equal_Int[1] {
 		t.Fatalf("float_Superior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal2_Int[0]); text != float_Superior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal2_Int[0]); text != float_Superior_Equal2_Int[1] {
 		t.Fatalf("float_Superior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal_Float[0]); text != float_Superior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal_Float[0]); text != float_Superior_Equal_Float[1] {
 		t.Fatalf("float_Superior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal2_Float[0]); text != float_Superior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal2_Float[0]); text != float_Superior_Equal2_Float[1] {
 		t.Fatalf("float_Superior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal_Bool[0]); text != float_Superior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal_Bool[0]); text != float_Superior_Equal_Bool[1] {
 		t.Fatalf("float_Superior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Equal2_Bool[0]); text != float_Superior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Equal2_Bool[0]); text != float_Superior_Equal2_Bool[1] {
 		t.Fatalf("float_Superior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -501,28 +495,28 @@ func TestConditionSuperiorEqual(t *testing.T) {
 	bool_Superior_Equal_Bool := []string{"#{b/True >= b/True; yes | no}", "yes"}
 	bool_Superior_Equal2_Bool := []string{"#{b/False >= b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(bool_Superior_Equal_Str[0]); text != bool_Superior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal_Str[0]); text != bool_Superior_Equal_Str[1] {
 		t.Fatalf("bool_Superior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal2_Str[0]); text != bool_Superior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal2_Str[0]); text != bool_Superior_Equal2_Str[1] {
 		t.Fatalf("bool_Superior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal_Int[0]); text != bool_Superior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal_Int[0]); text != bool_Superior_Equal_Int[1] {
 		t.Fatalf("bool_Superior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal2_Int[0]); text != bool_Superior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal2_Int[0]); text != bool_Superior_Equal2_Int[1] {
 		t.Fatalf("bool_Superior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal_Float[0]); text != bool_Superior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal_Float[0]); text != bool_Superior_Equal_Float[1] {
 		t.Fatalf("bool_Superior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal2_Float[0]); text != bool_Superior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal2_Float[0]); text != bool_Superior_Equal2_Float[1] {
 		t.Fatalf("bool_Superior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal_Bool[0]); text != bool_Superior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal_Bool[0]); text != bool_Superior_Equal_Bool[1] {
 		t.Fatalf("bool_Superior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Equal2_Bool[0]); text != bool_Superior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Equal2_Bool[0]); text != bool_Superior_Equal2_Bool[1] {
 		t.Fatalf("bool_Superior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Equal2_Bool[1] + Reset + "'")
 	}
 }
@@ -541,28 +535,28 @@ func TestConditionSuperior(t *testing.T) {
 	str_Superior_Bool := []string{"#{'text' > b/True; yes | no}", "yes"}
 	str_Superior2_Bool := []string{"#{'text' > b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(str_Superior_Str[0]); text != str_Superior_Str[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Str[0]); text != str_Superior_Str[1] {
 		t.Fatalf("str_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior2_Str[0]); text != str_Superior2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Superior2_Str[0]); text != str_Superior2_Str[1] {
 		t.Fatalf("str_Superior2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Superior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Int[0]); text != str_Superior_Int[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Int[0]); text != str_Superior_Int[1] {
 		t.Fatalf("str_Superior_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior2_Int[0]); text != str_Superior2_Int[1] {
+	if text, _ := parser.ParseCondition(str_Superior2_Int[0]); text != str_Superior2_Int[1] {
 		t.Fatalf("str_Superior2_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Superior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Float[0]); text != str_Superior_Float[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Float[0]); text != str_Superior_Float[1] {
 		t.Fatalf("str_Superior_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior2_Float[0]); text != str_Superior2_Float[1] {
+	if text, _ := parser.ParseCondition(str_Superior2_Float[0]); text != str_Superior2_Float[1] {
 		t.Fatalf("str_Superior2_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Superior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior_Bool[0]); text != str_Superior_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Superior_Bool[0]); text != str_Superior_Bool[1] {
 		t.Fatalf("str_Superior_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Superior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Superior2_Bool[0]); text != str_Superior2_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Superior2_Bool[0]); text != str_Superior2_Bool[1] {
 		t.Fatalf("str_Superior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Superior2_Bool[1] + Reset + "'")
 	}
 
@@ -576,28 +570,28 @@ func TestConditionSuperior(t *testing.T) {
 	int_Superior_Bool := []string{"#{i/4 > b/True; yes | no}", "yes"}
 	int_Superior2_Bool := []string{"#{i/4 > b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(int_Superior_Str[0]); text != int_Superior_Str[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Str[0]); text != int_Superior_Str[1] {
 		t.Fatalf("int_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior2_Str[0]); text != int_Superior2_Str[1] {
+	if text, _ := parser.ParseCondition(int_Superior2_Str[0]); text != int_Superior2_Str[1] {
 		t.Fatalf("int_Superior2_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Superior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Int[0]); text != int_Superior_Int[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Int[0]); text != int_Superior_Int[1] {
 		t.Fatalf("int_Superior_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior2_Int[0]); text != int_Superior2_Int[1] {
+	if text, _ := parser.ParseCondition(int_Superior2_Int[0]); text != int_Superior2_Int[1] {
 		t.Fatalf("int_Superior2_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Superior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Float[0]); text != int_Superior_Float[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Float[0]); text != int_Superior_Float[1] {
 		t.Fatalf("int_Superior_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior2_Float[0]); text != int_Superior2_Float[1] {
+	if text, _ := parser.ParseCondition(int_Superior2_Float[0]); text != int_Superior2_Float[1] {
 		t.Fatalf("int_Superior2_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Superior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior_Bool[0]); text != int_Superior_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Superior_Bool[0]); text != int_Superior_Bool[1] {
 		t.Fatalf("int_Superior_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Superior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Superior2_Bool[0]); text != int_Superior2_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Superior2_Bool[0]); text != int_Superior2_Bool[1] {
 		t.Fatalf("int_Superior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Superior2_Bool[1] + Reset + "'")
 	}
 
@@ -611,28 +605,28 @@ func TestConditionSuperior(t *testing.T) {
 	float_Superior_Bool := []string{"#{f/4.5 > b/True; yes | no}", "yes"}
 	float_Superior2_Bool := []string{"#{f/4.5 > b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(float_Superior_Str[0]); text != float_Superior_Str[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Str[0]); text != float_Superior_Str[1] {
 		t.Fatalf("float_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior2_Str[0]); text != float_Superior2_Str[1] {
+	if text, _ := parser.ParseCondition(float_Superior2_Str[0]); text != float_Superior2_Str[1] {
 		t.Fatalf("float_Superior2_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Superior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Int[0]); text != float_Superior_Int[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Int[0]); text != float_Superior_Int[1] {
 		t.Fatalf("float_Superior_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior2_Int[0]); text != float_Superior2_Int[1] {
+	if text, _ := parser.ParseCondition(float_Superior2_Int[0]); text != float_Superior2_Int[1] {
 		t.Fatalf("float_Superior2_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Superior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Float[0]); text != float_Superior_Float[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Float[0]); text != float_Superior_Float[1] {
 		t.Fatalf("float_Superior_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior2_Float[0]); text != float_Superior2_Float[1] {
+	if text, _ := parser.ParseCondition(float_Superior2_Float[0]); text != float_Superior2_Float[1] {
 		t.Fatalf("float_Superior2_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Superior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior_Bool[0]); text != float_Superior_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Superior_Bool[0]); text != float_Superior_Bool[1] {
 		t.Fatalf("float_Superior_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Superior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Superior2_Bool[0]); text != float_Superior2_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Superior2_Bool[0]); text != float_Superior2_Bool[1] {
 		t.Fatalf("float_Superior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Superior2_Bool[1] + Reset + "'")
 	}
 
@@ -646,28 +640,28 @@ func TestConditionSuperior(t *testing.T) {
 	bool_Superior_Bool := []string{"#{b/True > b/True; yes | no}", "no"}
 	bool_Superior2_Bool := []string{"#{b/False > b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(bool_Superior_Str[0]); text != bool_Superior_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Str[0]); text != bool_Superior_Str[1] {
 		t.Fatalf("bool_Superior_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior2_Str[0]); text != bool_Superior2_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Superior2_Str[0]); text != bool_Superior2_Str[1] {
 		t.Fatalf("bool_Superior2_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Int[0]); text != bool_Superior_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Int[0]); text != bool_Superior_Int[1] {
 		t.Fatalf("bool_Superior_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior2_Int[0]); text != bool_Superior2_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Superior2_Int[0]); text != bool_Superior2_Int[1] {
 		t.Fatalf("bool_Superior2_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Float[0]); text != bool_Superior_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Float[0]); text != bool_Superior_Float[1] {
 		t.Fatalf("bool_Superior_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior2_Float[0]); text != bool_Superior2_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Superior2_Float[0]); text != bool_Superior2_Float[1] {
 		t.Fatalf("bool_Superior2_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior_Bool[0]); text != bool_Superior_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Superior_Bool[0]); text != bool_Superior_Bool[1] {
 		t.Fatalf("bool_Superior_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Superior2_Bool[0]); text != bool_Superior2_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Superior2_Bool[0]); text != bool_Superior2_Bool[1] {
 		t.Fatalf("bool_Superior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Superior2_Bool[1] + Reset + "'")
 	}
 }
@@ -686,28 +680,28 @@ func TestConditionInferiorEqual(t *testing.T) {
 	str_Inferior_Equal_Bool := []string{"#{'text' <= b/True; yes | no}", "no"}
 	str_Inferior_Equal2_Bool := []string{"#{'text' <= b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(str_Inferior_Equal_Str[0]); text != str_Inferior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal_Str[0]); text != str_Inferior_Equal_Str[1] {
 		t.Fatalf("str_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal2_Str[0]); text != str_Inferior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal2_Str[0]); text != str_Inferior_Equal2_Str[1] {
 		t.Fatalf("str_Inferior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal_Int[0]); text != str_Inferior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal_Int[0]); text != str_Inferior_Equal_Int[1] {
 		t.Fatalf("str_Inferior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal2_Int[0]); text != str_Inferior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal2_Int[0]); text != str_Inferior_Equal2_Int[1] {
 		t.Fatalf("str_Inferior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal_Float[0]); text != str_Inferior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal_Float[0]); text != str_Inferior_Equal_Float[1] {
 		t.Fatalf("str_Inferior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal2_Float[0]); text != str_Inferior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal2_Float[0]); text != str_Inferior_Equal2_Float[1] {
 		t.Fatalf("str_Inferior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal_Bool[0]); text != str_Inferior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal_Bool[0]); text != str_Inferior_Equal_Bool[1] {
 		t.Fatalf("str_Inferior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Equal2_Bool[0]); text != str_Inferior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Equal2_Bool[0]); text != str_Inferior_Equal2_Bool[1] {
 		t.Fatalf("str_Inferior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -721,28 +715,28 @@ func TestConditionInferiorEqual(t *testing.T) {
 	int_Inferior_Equal_Bool := []string{"#{i/4 <= b/True; yes | no}", "no"}
 	int_Inferior_Equal2_Bool := []string{"#{i/4 <= b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(int_Inferior_Equal_Str[0]); text != int_Inferior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal_Str[0]); text != int_Inferior_Equal_Str[1] {
 		t.Fatalf("int_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal2_Str[0]); text != int_Inferior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal2_Str[0]); text != int_Inferior_Equal2_Str[1] {
 		t.Fatalf("int_Inferior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal_Int[0]); text != int_Inferior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal_Int[0]); text != int_Inferior_Equal_Int[1] {
 		t.Fatalf("int_Inferior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal2_Int[0]); text != int_Inferior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal2_Int[0]); text != int_Inferior_Equal2_Int[1] {
 		t.Fatalf("int_Inferior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal_Float[0]); text != int_Inferior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal_Float[0]); text != int_Inferior_Equal_Float[1] {
 		t.Fatalf("int_Inferior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal2_Float[0]); text != int_Inferior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal2_Float[0]); text != int_Inferior_Equal2_Float[1] {
 		t.Fatalf("int_Inferior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal_Bool[0]); text != int_Inferior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal_Bool[0]); text != int_Inferior_Equal_Bool[1] {
 		t.Fatalf("int_Inferior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Equal2_Bool[0]); text != int_Inferior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Equal2_Bool[0]); text != int_Inferior_Equal2_Bool[1] {
 		t.Fatalf("int_Inferior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -756,28 +750,28 @@ func TestConditionInferiorEqual(t *testing.T) {
 	float_Inferior_Equal_Bool := []string{"#{f/4.5 <= b/True; yes | no}", "no"}
 	float_Inferior_Equal2_Bool := []string{"#{f/4.5 <= b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(float_Inferior_Equal_Str[0]); text != float_Inferior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal_Str[0]); text != float_Inferior_Equal_Str[1] {
 		t.Fatalf("float_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal2_Str[0]); text != float_Inferior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal2_Str[0]); text != float_Inferior_Equal2_Str[1] {
 		t.Fatalf("float_Inferior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal_Int[0]); text != float_Inferior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal_Int[0]); text != float_Inferior_Equal_Int[1] {
 		t.Fatalf("float_Inferior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal2_Int[0]); text != float_Inferior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal2_Int[0]); text != float_Inferior_Equal2_Int[1] {
 		t.Fatalf("float_Inferior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal_Float[0]); text != float_Inferior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal_Float[0]); text != float_Inferior_Equal_Float[1] {
 		t.Fatalf("float_Inferior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal2_Float[0]); text != float_Inferior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal2_Float[0]); text != float_Inferior_Equal2_Float[1] {
 		t.Fatalf("float_Inferior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal_Bool[0]); text != float_Inferior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal_Bool[0]); text != float_Inferior_Equal_Bool[1] {
 		t.Fatalf("float_Inferior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Equal2_Bool[0]); text != float_Inferior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Equal2_Bool[0]); text != float_Inferior_Equal2_Bool[1] {
 		t.Fatalf("float_Inferior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Equal2_Bool[1] + Reset + "'")
 	}
 
@@ -791,28 +785,28 @@ func TestConditionInferiorEqual(t *testing.T) {
 	bool_Inferior_Equal_Bool := []string{"#{b/True <= b/True; yes | no}", "yes"}
 	bool_Inferior_Equal2_Bool := []string{"#{b/False <= b/False; yes | no}", "yes"}
 
-	if text := parser.ParseCondition(bool_Inferior_Equal_Str[0]); text != bool_Inferior_Equal_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal_Str[0]); text != bool_Inferior_Equal_Str[1] {
 		t.Fatalf("bool_Inferior_Equal_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal2_Str[0]); text != bool_Inferior_Equal2_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal2_Str[0]); text != bool_Inferior_Equal2_Str[1] {
 		t.Fatalf("bool_Inferior_Equal2_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal_Int[0]); text != bool_Inferior_Equal_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal_Int[0]); text != bool_Inferior_Equal_Int[1] {
 		t.Fatalf("bool_Inferior_Equal_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal2_Int[0]); text != bool_Inferior_Equal2_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal2_Int[0]); text != bool_Inferior_Equal2_Int[1] {
 		t.Fatalf("bool_Inferior_Equal2_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal_Float[0]); text != bool_Inferior_Equal_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal_Float[0]); text != bool_Inferior_Equal_Float[1] {
 		t.Fatalf("bool_Inferior_Equal_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal2_Float[0]); text != bool_Inferior_Equal2_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal2_Float[0]); text != bool_Inferior_Equal2_Float[1] {
 		t.Fatalf("bool_Inferior_Equal2_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal_Bool[0]); text != bool_Inferior_Equal_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal_Bool[0]); text != bool_Inferior_Equal_Bool[1] {
 		t.Fatalf("bool_Inferior_Equal_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Equal2_Bool[0]); text != bool_Inferior_Equal2_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Equal2_Bool[0]); text != bool_Inferior_Equal2_Bool[1] {
 		t.Fatalf("bool_Inferior_Equal2_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Equal2_Bool[1] + Reset + "'")
 	}
 }
@@ -831,28 +825,28 @@ func TestConditionInferior(t *testing.T) {
 	str_Inferior_Bool := []string{"#{'text' < b/True; yes | no}", "no"}
 	str_Inferior2_Bool := []string{"#{'text' < b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(str_Inferior_Str[0]); text != str_Inferior_Str[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Str[0]); text != str_Inferior_Str[1] {
 		t.Fatalf("str_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior2_Str[0]); text != str_Inferior2_Str[1] {
+	if text, _ := parser.ParseCondition(str_Inferior2_Str[0]); text != str_Inferior2_Str[1] {
 		t.Fatalf("str_Inferior2_Str : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Int[0]); text != str_Inferior_Int[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Int[0]); text != str_Inferior_Int[1] {
 		t.Fatalf("str_Inferior_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior2_Int[0]); text != str_Inferior2_Int[1] {
+	if text, _ := parser.ParseCondition(str_Inferior2_Int[0]); text != str_Inferior2_Int[1] {
 		t.Fatalf("str_Inferior2_Int : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Float[0]); text != str_Inferior_Float[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Float[0]); text != str_Inferior_Float[1] {
 		t.Fatalf("str_Inferior_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior2_Float[0]); text != str_Inferior2_Float[1] {
+	if text, _ := parser.ParseCondition(str_Inferior2_Float[0]); text != str_Inferior2_Float[1] {
 		t.Fatalf("str_Inferior2_Float : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior_Bool[0]); text != str_Inferior_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Inferior_Bool[0]); text != str_Inferior_Bool[1] {
 		t.Fatalf("str_Inferior_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(str_Inferior2_Bool[0]); text != str_Inferior2_Bool[1] {
+	if text, _ := parser.ParseCondition(str_Inferior2_Bool[0]); text != str_Inferior2_Bool[1] {
 		t.Fatalf("str_Inferior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + str_Inferior2_Bool[1] + Reset + "'")
 	}
 
@@ -866,28 +860,28 @@ func TestConditionInferior(t *testing.T) {
 	int_Inferior_Bool := []string{"#{i/4 < b/True; yes | no}", "no"}
 	int_Inferior2_Bool := []string{"#{i/4 < b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(int_Inferior_Str[0]); text != int_Inferior_Str[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Str[0]); text != int_Inferior_Str[1] {
 		t.Fatalf("int_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior2_Str[0]); text != int_Inferior2_Str[1] {
+	if text, _ := parser.ParseCondition(int_Inferior2_Str[0]); text != int_Inferior2_Str[1] {
 		t.Fatalf("int_Inferior2_Str : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Int[0]); text != int_Inferior_Int[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Int[0]); text != int_Inferior_Int[1] {
 		t.Fatalf("int_Inferior_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior2_Int[0]); text != int_Inferior2_Int[1] {
+	if text, _ := parser.ParseCondition(int_Inferior2_Int[0]); text != int_Inferior2_Int[1] {
 		t.Fatalf("int_Inferior2_Int : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Float[0]); text != int_Inferior_Float[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Float[0]); text != int_Inferior_Float[1] {
 		t.Fatalf("int_Inferior_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior2_Float[0]); text != int_Inferior2_Float[1] {
+	if text, _ := parser.ParseCondition(int_Inferior2_Float[0]); text != int_Inferior2_Float[1] {
 		t.Fatalf("int_Inferior2_Float : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior_Bool[0]); text != int_Inferior_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Inferior_Bool[0]); text != int_Inferior_Bool[1] {
 		t.Fatalf("int_Inferior_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(int_Inferior2_Bool[0]); text != int_Inferior2_Bool[1] {
+	if text, _ := parser.ParseCondition(int_Inferior2_Bool[0]); text != int_Inferior2_Bool[1] {
 		t.Fatalf("int_Inferior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + int_Inferior2_Bool[1] + Reset + "'")
 	}
 
@@ -901,28 +895,28 @@ func TestConditionInferior(t *testing.T) {
 	float_Inferior_Bool := []string{"#{f/4.5 < b/True; yes | no}", "no"}
 	float_Inferior2_Bool := []string{"#{f/4.5 < b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(float_Inferior_Str[0]); text != float_Inferior_Str[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Str[0]); text != float_Inferior_Str[1] {
 		t.Fatalf("float_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior2_Str[0]); text != float_Inferior2_Str[1] {
+	if text, _ := parser.ParseCondition(float_Inferior2_Str[0]); text != float_Inferior2_Str[1] {
 		t.Fatalf("float_Inferior2_Str : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Int[0]); text != float_Inferior_Int[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Int[0]); text != float_Inferior_Int[1] {
 		t.Fatalf("float_Inferior_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior2_Int[0]); text != float_Inferior2_Int[1] {
+	if text, _ := parser.ParseCondition(float_Inferior2_Int[0]); text != float_Inferior2_Int[1] {
 		t.Fatalf("float_Inferior2_Int : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Float[0]); text != float_Inferior_Float[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Float[0]); text != float_Inferior_Float[1] {
 		t.Fatalf("float_Inferior_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior2_Float[0]); text != float_Inferior2_Float[1] {
+	if text, _ := parser.ParseCondition(float_Inferior2_Float[0]); text != float_Inferior2_Float[1] {
 		t.Fatalf("float_Inferior2_Float : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior_Bool[0]); text != float_Inferior_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Inferior_Bool[0]); text != float_Inferior_Bool[1] {
 		t.Fatalf("float_Inferior_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(float_Inferior2_Bool[0]); text != float_Inferior2_Bool[1] {
+	if text, _ := parser.ParseCondition(float_Inferior2_Bool[0]); text != float_Inferior2_Bool[1] {
 		t.Fatalf("float_Inferior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + float_Inferior2_Bool[1] + Reset + "'")
 	}
 
@@ -936,28 +930,28 @@ func TestConditionInferior(t *testing.T) {
 	bool_Inferior_Bool := []string{"#{b/True < b/True; yes | no}", "no"}
 	bool_Inferior2_Bool := []string{"#{b/False < b/False; yes | no}", "no"}
 
-	if text := parser.ParseCondition(bool_Inferior_Str[0]); text != bool_Inferior_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Str[0]); text != bool_Inferior_Str[1] {
 		t.Fatalf("bool_Inferior_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior2_Str[0]); text != bool_Inferior2_Str[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior2_Str[0]); text != bool_Inferior2_Str[1] {
 		t.Fatalf("bool_Inferior2_Str : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior2_Str[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Int[0]); text != bool_Inferior_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Int[0]); text != bool_Inferior_Int[1] {
 		t.Fatalf("bool_Inferior_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior2_Int[0]); text != bool_Inferior2_Int[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior2_Int[0]); text != bool_Inferior2_Int[1] {
 		t.Fatalf("bool_Inferior2_Int : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior2_Int[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Float[0]); text != bool_Inferior_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Float[0]); text != bool_Inferior_Float[1] {
 		t.Fatalf("bool_Inferior_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior2_Float[0]); text != bool_Inferior2_Float[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior2_Float[0]); text != bool_Inferior2_Float[1] {
 		t.Fatalf("bool_Inferior2_Float : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior2_Float[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior_Bool[0]); text != bool_Inferior_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior_Bool[0]); text != bool_Inferior_Bool[1] {
 		t.Fatalf("bool_Inferior_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior_Bool[1] + Reset + "'")
 	}
-	if text := parser.ParseCondition(bool_Inferior2_Bool[0]); text != bool_Inferior2_Bool[1] {
+	if text, _ := parser.ParseCondition(bool_Inferior2_Bool[0]); text != bool_Inferior2_Bool[1] {
 		t.Fatalf("bool_Inferior2_Bool : '" + Red + text + Reset + "' != '" + Yellow + bool_Inferior2_Bool[1] + Reset + "'")
 	}
 }
@@ -969,11 +963,11 @@ func TestSwitch(t *testing.T) {
 
 	parser := tem.New(arrayFunc, varMap)
 
-	if text := parser.ParseSwitch(text_Switch_1[0]); text != text_Switch_1[1] {
+	if text, _ := parser.ParseSwitch(text_Switch_1[0]); text != text_Switch_1[1] {
 		t.Fatalf("text_Switch_1 : '" + Red + text + Reset + "' != '" + Yellow + text_Switch_1[1] + Reset + "'")
 	}
 
-	if text := parser.Parse(text_Switch_2[0]); text != text_Switch_2[1] {
+	if text, _ := parser.Parse(text_Switch_2[0]); text != text_Switch_2[1] {
 		t.Fatalf("text_Switch_2 : '" + Red + text + Reset + "' != '" + Yellow + text_Switch_2[1] + Reset + "'")
 	}
 }
@@ -988,24 +982,24 @@ func TestHasOne(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, VarMap{})
 
-	if text := parser.HasOne(fmt.Sprintf("%v", text_Has_One_1[0])); text != text_Has_One_1[1] {
-		t.Fatalf("text_Has_One_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_1[1]) + Reset + "'")
+	if bool := parser.HasOne(fmt.Sprintf("%v", text_Has_One_1[0])); bool != text_Has_One_1[1] {
+		t.Fatalf("text_Has_One_1 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_1[1]) + Reset + "'")
 	}
 
-	if text := parser.HasOne(fmt.Sprintf("%v", text_Has_One_2[0])); text != text_Has_One_2[1] {
-		t.Fatalf("text_Has_One_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_2[1]) + Reset + "'")
+	if bool := parser.HasOne(fmt.Sprintf("%v", text_Has_One_2[0])); bool != text_Has_One_2[1] {
+		t.Fatalf("text_Has_One_2 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_2[1]) + Reset + "'")
 	}
 
-	if text := parser.HasOne(fmt.Sprintf("%v", text_Has_One_3[0])); text != text_Has_One_3[1] {
-		t.Fatalf("text_Has_One_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_3[1]) + Reset + "'")
+	if bool := parser.HasOne(fmt.Sprintf("%v", text_Has_One_3[0])); bool != text_Has_One_3[1] {
+		t.Fatalf("text_Has_One_3 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_3[1]) + Reset + "'")
 	}
 
-	if text := parser.HasOne(fmt.Sprintf("%v", text_Has_One_4[0])); text != text_Has_One_4[1] {
-		t.Fatalf("text_Has_One_4 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_4[1]) + Reset + "'")
+	if bool := parser.HasOne(fmt.Sprintf("%v", text_Has_One_4[0])); bool != text_Has_One_4[1] {
+		t.Fatalf("text_Has_One_4 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_4[1]) + Reset + "'")
 	}
 
-	if text := parser.HasOne(fmt.Sprintf("%v", text_Has_One_5[0])); text != text_Has_One_5[1] {
-		t.Fatalf("text_Has_One_5 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_5[1]) + Reset + "'")
+	if bool := parser.HasOne(fmt.Sprintf("%v", text_Has_One_5[0])); bool != text_Has_One_5[1] {
+		t.Fatalf("text_Has_One_5 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_One_5[1]) + Reset + "'")
 	}
 }
 
@@ -1017,16 +1011,16 @@ func TestHasVariable(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, VarMap{})
 
-	if text := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_1[0])); text != text_Has_Variable_1[1] {
-		t.Fatalf("text_Has_Variable_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_1[1]) + Reset + "'")
+	if bool := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_1[0])); bool != text_Has_Variable_1[1] {
+		t.Fatalf("text_Has_Variable_1 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_1[1]) + Reset + "'")
 	}
 
-	if text := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_2[0])); text != text_Has_Variable_2[1] {
-		t.Fatalf("text_Has_Variable_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_2[1]) + Reset + "'")
+	if bool := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_2[0])); bool != text_Has_Variable_2[1] {
+		t.Fatalf("text_Has_Variable_2 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_2[1]) + Reset + "'")
 	}
 
-	if text := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_3[0])); text != text_Has_Variable_3[1] {
-		t.Fatalf("text_Has_Variable_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_3[1]) + Reset + "'")
+	if bool := parser.HasVariable(fmt.Sprintf("%v", text_Has_Variable_3[0])); bool != text_Has_Variable_3[1] {
+		t.Fatalf("text_Has_Variable_3 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Variable_3[1]) + Reset + "'")
 	}
 }
 
@@ -1038,16 +1032,16 @@ func TestHasFunction(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, VarMap{})
 
-	if text := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_1[0])); text != text_Has_Function_1[1] {
-		t.Fatalf("text_Has_Function_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_1[1]) + Reset + "'")
+	if bool := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_1[0])); bool != text_Has_Function_1[1] {
+		t.Fatalf("text_Has_Function_1 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_1[1]) + Reset + "'")
 	}
 
-	if text := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_2[0])); text != text_Has_Function_2[1] {
-		t.Fatalf("text_Has_Function_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_2[1]) + Reset + "'")
+	if bool := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_2[0])); bool != text_Has_Function_2[1] {
+		t.Fatalf("text_Has_Function_2 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_2[1]) + Reset + "'")
 	}
 
-	if text := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_3[0])); text != text_Has_Function_3[1] {
-		t.Fatalf("text_Has_Function_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_3[1]) + Reset + "'")
+	if bool := parser.HasFunction(fmt.Sprintf("%v", text_Has_Function_3[0])); bool != text_Has_Function_3[1] {
+		t.Fatalf("text_Has_Function_3 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Function_3[1]) + Reset + "'")
 	}
 }
 
@@ -1059,16 +1053,16 @@ func TestHasCondition(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, VarMap{})
 
-	if text := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_1[0])); text != text_Has_Condition_1[1] {
-		t.Fatalf("text_Has_Condition_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_1[1]) + Reset + "'")
+	if bool := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_1[0])); bool != text_Has_Condition_1[1] {
+		t.Fatalf("text_Has_Condition_1 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_1[1]) + Reset + "'")
 	}
 
-	if text := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_2[0])); text != text_Has_Condition_2[1] {
-		t.Fatalf("text_Has_Condition_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_2[1]) + Reset + "'")
+	if bool := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_2[0])); bool != text_Has_Condition_2[1] {
+		t.Fatalf("text_Has_Condition_2 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_2[1]) + Reset + "'")
 	}
 
-	if text := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_3[0])); text != text_Has_Condition_3[1] {
-		t.Fatalf("text_Has_Condition_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_3[1]) + Reset + "'")
+	if bool := parser.HasCondition(fmt.Sprintf("%v", text_Has_Condition_3[0])); bool != text_Has_Condition_3[1] {
+		t.Fatalf("text_Has_Condition_3 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Condition_3[1]) + Reset + "'")
 	}
 }
 
@@ -1080,15 +1074,15 @@ func TestHasSwitch(t *testing.T) {
 
 	parser := tem.New(FuncArray{}, VarMap{})
 
-	if text := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_1[0])); text != text_Has_Switch_1[1] {
-		t.Fatalf("text_Has_Switch_1 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_1[1]) + Reset + "'")
+	if bool := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_1[0])); bool != text_Has_Switch_1[1] {
+		t.Fatalf("text_Has_Switch_1 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_1[1]) + Reset + "'")
 	}
 
-	if text := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_2[0])); text != text_Has_Switch_2[1] {
-		t.Fatalf("text_Has_Switch_2 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_2[1]) + Reset + "'")
+	if bool := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_2[0])); bool != text_Has_Switch_2[1] {
+		t.Fatalf("text_Has_Switch_2 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_2[1]) + Reset + "'")
 	}
 
-	if text := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_3[0])); text != text_Has_Switch_3[1] {
-		t.Fatalf("text_Has_Switch_3 : '" + Red + fmt.Sprintf("%v", text) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_3[1]) + Reset + "'")
+	if bool := parser.HasSwitch(fmt.Sprintf("%v", text_Has_Switch_3[0])); bool != text_Has_Switch_3[1] {
+		t.Fatalf("text_Has_Switch_3 : '" + Red + fmt.Sprintf("%v", bool) + Reset + "' != '" + Yellow + fmt.Sprintf("%v", text_Has_Switch_3[1]) + Reset + "'")
 	}
 }

@@ -56,7 +56,7 @@ func getNameFunc(function Func) string {
 	return spli[len(spli)-1]
 }
 
-func getVariable(key string, varMap VariableMap, index ...int) (Any, bool) {
+func getVariable(key string, varMap VariableMap, index ...int) (Any, error) {
 
 	var fvalue Any
 	var ok bool
@@ -77,30 +77,31 @@ func getVariable(key string, varMap VariableMap, index ...int) (Any, bool) {
 				tempMap, ok = tempMap[keyMap].(VariableMap)
 			}
 			if !ok {
-				panic("[key '[" + key + "]' not exist]")
+				return "", NotFoundVariableError("[key '[" + key + "]' not exist]")
 			}
 		}
 	} else {
 		fvalue, ok = varMap[key]
 		if !ok {
-			panic("[key '[" + key + "]' not exist]")
+			return "", NotFoundVariableError("[key '[" + key + "]' not exist]")
 		}
 	}
 
 	if fvalue == nil {
-		return "none", false
+		return "none", nil
 	}
+
 	if lenIndex := len(index); lenIndex != 0 && (reflect.TypeOf(fvalue).Kind() == reflect.Slice || reflect.TypeOf(fvalue).Kind() == reflect.Array) {
 		if lenfvalue := len(fvalue.([]Any)); !(lenfvalue <= index[0]) {
 			fvalue = fvalue.([]Any)[index[0]]
 		} else {
-			panic("[index '[" + fmt.Sprint(index[0]) + "]' out of range]")
+			return "", IndexError("[index '[" + fmt.Sprint(index[0]) + "]' out of range]")
 		}
 	} else if lenIndex != 0 {
-		panic("[key '[" + key + "]' is not array]")
+		return "", NotAArrayError("[key '[" + key + "]' is not array]")
 	}
 
-	return fvalue, ok
+	return fvalue, nil
 }
 
 func checkExistFuncStr(functionArray FuncArray, compareStr string) (bool, int, string) {
@@ -252,29 +253,36 @@ func ternary(cond bool, val1 string, val2 string) string {
 // shortcuts to run all parsers
 //
 // return -> string
-func (t TemplateStr) Parse(text string) string {
+func (t TemplateStr) Parse(text string) (string, error) {
+
+	var err error
 
 	for t.HasOne(text) {
 
-		text = t.ParseVariable(text)
 
-		text = t.ParseFunction(text)
+		text, err = t.ParseVariable(text)
+		if err != nil {return "", err}
 
-		text = t.ParseCondition(text)
+		text, err = t.ParseFunction(text)
+		if err != nil {return "", err}
 
-		text = t.ParseSwitch(text)
+		text, err = t.ParseCondition(text)
+		if err != nil {return "", err}
+
+		text, err = t.ParseSwitch(text)
+		if err != nil {return "", err}
 	}
 
-	return text
+	return text, nil
 }
 
 // parse all the `${variable}` in the text give in
 //
 // return -> string
-func (t TemplateStr) ParseVariable(text string) string {
+func (t TemplateStr) ParseVariable(text string) (string, error) {
 
 	if !t.HasVariable(text) {
-		return text
+		return text, nil
 	}
 
 	for t.HasVariable(text) {
@@ -282,16 +290,16 @@ func (t TemplateStr) ParseVariable(text string) string {
 
 			variable := v["variable"]
 			var value Any
+			var err error
 
 			if index := v["index"]; index == "" {
-
-				value, _ = getVariable(variable, t.variableMap)
+				value, err = getVariable(variable, t.variableMap)
 			} else {
-
 				index, _ := strconv.Atoi(index)
-				value, _ = getVariable(variable, t.variableMap, index)
-
+				value, err = getVariable(variable, t.variableMap, index)
 			}
+
+			if err != nil {return "", err}
 
 			key := fmt.Sprintf("%v", value)
 			match := v["match"]
@@ -300,16 +308,16 @@ func (t TemplateStr) ParseVariable(text string) string {
 		}
 	}
 
-	return text
+	return text, nil
 }
 
 // parse all the `{{@function param1 param2}}` or `{{@function}}` in the text give in
 //
 // return -> string
-func (t TemplateStr) ParseFunction(text string) string {
+func (t TemplateStr) ParseFunction(text string) (string, error) {
 
 	if !t.HasFunction(text) {
-		return text
+		return text, nil
 	}
 
 	// c := cases.Fold()
@@ -324,25 +332,31 @@ func (t TemplateStr) ParseFunction(text string) string {
 			// var value string = "None"
 			dateTime := time.Now()
 
-			value := func(par string) string {
-				if v, ok := getVariable(par, t.variableMap); ok && fmt.Sprint(v) != "" {
-					return fmt.Sprint(v)
+			value := func(par string) (string, error) {
+
+				v, err := getVariable(par, t.variableMap)
+				if err == nil {
+					if fmt.Sprint(v) != "" {
+						return fmt.Sprint(v), nil
+					}
 				}
-				return "none"
+
+				return "", err
+				
 			}
 
 			functionName := group["functionName"]
 
 			switch functionName {
 			case "uppercase":
-				text = strings.Replace(text, match, strings.ToUpper(value(parameters)), -1)
+				if v, err := value(parameters); err == nil {text = strings.Replace(text, match, strings.ToUpper(v), -1)} else { return "", err }
 			case "uppercaseFirst":
-				text = strings.Replace(text, match, upperCaseFirst(value(parameters)), -1)
+				if v, err := value(parameters); err == nil {text = strings.Replace(text, match, upperCaseFirst(v), -1)} else { return "", err }
 			case "lowercase":
-				text = strings.Replace(text, match, strings.ToLower(value(parameters)), -1)
+				if v, err := value(parameters); err == nil {text = strings.Replace(text, match, strings.ToLower(v), -1)} else { return "", err }
 			// case "casefold": text = strings.Replace(text, match, c.String(key), -1)
 			case "swapcase":
-				text = strings.Replace(text, match, swapCase(value(parameters)), -1)
+				if v, err := value(parameters); err == nil {text = strings.Replace(text, match, swapCase(v), -1)} else { return "", err }
 			case "time":
 				text = strings.Replace(text, match, dateTime.Format("15:04:05"), -1)
 			case "date":
@@ -363,22 +377,22 @@ func (t TemplateStr) ParseFunction(text string) string {
 						text = strings.Replace(text, match, resultTextfunc, -1)
 					}
 				} else {
-					panic("[Function " + functionName + " not exist]")
+					return "", NotFoundFunctionError("[Function " + functionName + " not exist]")
 				}
 			}
 		}
 	}
 
-	return text
+	return text, nil
 }
 
 // parse all the `{{#var1 == var2: value1 || value2}}` in the text give in
 //
 // return -> string
-func (t TemplateStr) ParseCondition(text string) string {
+func (t TemplateStr) ParseCondition(text string) (string, error) {
 
 	if !t.HasCondition(text) {
-		return text
+		return text, nil
 	}
 
 	for t.HasCondition(text) {
@@ -408,22 +422,24 @@ func (t TemplateStr) ParseCondition(text string) string {
 					text = strings.Replace(text, match, ternary(v1 < v2, trueValue, falseValue), -1)
 				} else if conditionSymbol == ">" {
 					text = strings.Replace(text, match, ternary(v1 > v2, trueValue, falseValue), -1)
+				} else {
+					return "", BadComparatorError("["+conditionSymbol+" is not valid comparator]")
 				}
 			}
 		}
 	}
 
-	return text
+	return text, nil
 }
 
 // parse all the `{{?var; value1=#0F0, 56=#00F, ..., default=#000}}` or
 // `{{?var:int; 56=#0F0, 32=#00F, ..., default=#000}}` in the text give in
 //
 // return -> string
-func (t TemplateStr) ParseSwitch(text string) string {
+func (t TemplateStr) ParseSwitch(text string) (string, error) {
 
 	if !t.HasSwitch(text) {
-		return text
+		return text, nil
 	}
 
 	for t.HasSwitch(text) {
@@ -468,7 +484,7 @@ func (t TemplateStr) ParseSwitch(text string) string {
 		}
 	}
 
-	return text
+	return text, nil
 }
 
 // Detects if there is the presence of min one syntaxe
